@@ -10,10 +10,12 @@ import {
 } from "recharts";
 import classNames from "classnames";
 import { format, parseISO, isToday } from "date-fns";
+import { de as locale } from "date-fns/locale";
+
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import { COLORS } from "../helpers/constants";
+import { COLORS, DATE_FORMAT, DATE_TIME_FORMAT } from "../helpers/constants";
 
 export const CHART_MARGINS = { top: 10, bottom: 0, left: 0, right: 0 };
 
@@ -59,7 +61,7 @@ export async function getStaticProps(context) {
 }
 
 function parseAndFormatDate(day: string, dateFormat: string) {
-  return format(parseISO(day), dateFormat);
+  return format(parseISO(day), dateFormat, { locale });
 }
 
 function Number({ children, className }) {
@@ -120,7 +122,7 @@ Number.Chart = ({
             <div className="p-1 z-20 relative text-center">
               {dayISO && (
                 <p className="text-sm">
-                  {parseAndFormatDate(dayISO, "dd.MM.yyy")}
+                  {parseAndFormatDate(dayISO, DATE_FORMAT)}
                 </p>
               )}
 
@@ -184,12 +186,16 @@ function NewInfections({ generalData, epicurve, versionData }) {
     .reduce((acc, v) => acc + v.cases, 0);
 
   let newInfections = generalData.allInfections - previouslyInfected;
-  let label = `neue Fälle seit ${format(versionDate, "dd.MM.yyyy HH:mm")} Uhr`;
+  let label = `neue Fälle seit ${format(versionDate, DATE_TIME_FORMAT, {
+    locale,
+  })} Uhr`;
   const reversedEpicurve = epicurve.slice().reverse();
   let data = reversedEpicurve.slice(0, 14).reverse();
 
   if (isLatestUpdateFromToday) {
-    label = `neue Fälle seit ${format(day, "dd.MM.yyy")} 00:00 Uhr`;
+    label = `neue Fälle seit ${format(day, DATE_FORMAT, {
+      locale,
+    })} 00:00 Uhr`;
     data[data.length - 1] = {
       ...lastEntry,
       cases: newInfections,

@@ -28,6 +28,9 @@ export const KEYS = {
 
 export const CHART_MARGINS = { top: 0, bottom: 0, left: 0, right: 0 };
 
+export const DATE_FORMAT = "eeeeee, dd.MM.yyyy";
+export const DATE_TIME_FORMAT = `${DATE_FORMAT} HH:mm`;
+
 export const COLORS = {
   blue: {
     light: "#bee3f8",

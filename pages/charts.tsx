@@ -9,10 +9,12 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { format, parseISO } from "date-fns";
+import { de as locale } from "date-fns/locale";
+
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import { CHART_MARGINS, COLORS } from "../helpers/constants";
+import { CHART_MARGINS, COLORS, DATE_FORMAT } from "../helpers/constants";
 
 export async function getStaticProps(context) {
   const epicurve = await dataApi.fetchEpicurve();
@@ -24,7 +26,7 @@ export async function getStaticProps(context) {
 }
 
 function parseAndFormatDate(day: string, dateFormat: string) {
-  return format(parseISO(day), dateFormat);
+  return format(parseISO(day), dateFormat, { locale });
 }
 
 function ChartHeader({ children }) {
@@ -55,7 +57,7 @@ function CasesChart({ data }: ChartWithData) {
               <div className="relative">
                 <div className="p-4 z-20 relative text-center">
                   <p className="text-sm mb-4">
-                    {parseAndFormatDate(day, "dd.MM.yyy")}
+                    {parseAndFormatDate(day, DATE_FORMAT)}
                   </p>
                   <div className="space-y-2">
                     <div>
@@ -125,7 +127,7 @@ function TestsChart({ data }: ChartWithData) {
               <div className="relative">
                 <div className="p-4 z-20 relative text-center">
                   <p className="text-sm mb-4">
-                    {parseAndFormatDate(day, "dd.MM.yyy")}
+                    {parseAndFormatDate(day, DATE_FORMAT)}
                   </p>
                   <div className="space-y-2">
                     <div>
@@ -197,7 +199,7 @@ function HospitalChart({ data }: ChartWithData) {
               <div className="relative">
                 <div className="p-4 z-20 relative text-center">
                   <p className="text-sm mb-4">
-                    {parseAndFormatDate(day, "dd.MM.yyy")}
+                    {parseAndFormatDate(day, DATE_FORMAT)}
                   </p>
                   <div className="space-y-2">
                     <div>
@@ -265,7 +267,7 @@ function ICUChart({ data }: ChartWithData) {
               <div className="relative">
                 <div className="p-4 z-20 relative text-center">
                   <p className="text-sm mb-4">
-                    {parseAndFormatDate(day, "dd.MM.yyy")}
+                    {parseAndFormatDate(day, DATE_FORMAT)}
                   </p>
                   <div className="space-y-2">
                     <div>
@@ -340,7 +342,7 @@ function DeathsChart({ data }: ChartWithData) {
                     <div>{sevenDayDeaths?.toFixed(2)} 7-Tage-Inzidenz</div>
                   </div>
                   <p className="text-sm">
-                    {parseAndFormatDate(day, "dd.MM.yyy")}
+                    {parseAndFormatDate(day, DATE_FORMAT)}
                   </p>
                 </div>
                 <div className="bg-gray-300 opacity-50 absolute inset-0 z-10"></div>
