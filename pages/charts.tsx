@@ -11,7 +11,6 @@ import {
 import { format, parseISO } from "date-fns";
 import { de as locale } from "date-fns/locale";
 
-import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { CHART_MARGINS, COLORS, DATE_FORMAT } from "../helpers/constants";

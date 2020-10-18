@@ -15,7 +15,7 @@ import { de as locale } from "date-fns/locale";
 
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import { COLORS, DATE_FORMAT, DATE_TIME_FORMAT } from "../helpers/constants";
+import { COLORS, DATE_FORMAT } from "../helpers/constants";
 
 export const CHART_MARGINS = { top: 10, bottom: 0, left: 0, right: 0 };
 
