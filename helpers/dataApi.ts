@@ -1,5 +1,6 @@
-import { parse, formatISO } from "date-fns";
+import { parse, formatISO, format } from "date-fns";
 import fetchAgesData from "./fetchAgesData";
+import { zonedTimeToUtc } from "date-fns-tz";
 
 const KEYS = {
   version: "VersionsNr",

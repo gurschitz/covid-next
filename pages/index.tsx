@@ -56,6 +56,7 @@ export async function getStaticProps(context) {
 }
 
 function parseAndFormatDate(day: string, dateFormat: string) {
+  console.log(day);
   return format(parseISO(day), dateFormat, { locale });
 }
 
