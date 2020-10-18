@@ -204,7 +204,7 @@ function NewInfections({ generalData, epicurve, versionData }) {
 
   return (
     <Number className="bg-blue-100 text-blue-900">
-      <Number.Value className="lg:w-1/2" label={label}>
+      <Number.Value className="lg:w-1/2 xl:w-2/5" label={label}>
         {newInfections}
       </Number.Value>
 
