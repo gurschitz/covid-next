@@ -302,7 +302,24 @@ function Dashboard({
 }) {
   return (
     <div>
-      <div className="grid lg:grid-cols-2 gap-2 lg:gap-4 py-1 px-3 lg:py-4 lg:px-4">
+      <div className="grid lg:grid-cols-3 gap-3 px-3 lg:px-4">
+        <Number className="bg-gray-200 text-gray-900">
+          <Number.Value label="positiv getestet">
+            {generalData.allInfections}
+          </Number.Value>
+        </Number>
+        <Number className="bg-gray-200 text-gray-900">
+          <Number.Value label="aktive Fälle">
+            {generalData.activeCases}
+          </Number.Value>
+        </Number>
+        <Number className="bg-gray-200 text-gray-900">
+          <Number.Value label="Testungen gesamt">
+            {generalData.allTests}
+          </Number.Value>
+        </Number>
+      </div>
+      <div className="grid lg:grid-cols-2 gap-3 py-4 px-3 lg:px-4">
         <NewInfections
           generalData={generalData}
           epicurve={epicurve}
@@ -410,23 +427,6 @@ function Dashboard({
           showDelta
         />
       </div>
-      <div className="grid lg:grid-cols-3 gap-2 lg:gap-4 py-1 px-2 lg:py-4 lg:px-4">
-        <Number className="bg-gray-200 text-gray-900">
-          <Number.Value label="positiv getestet">
-            {generalData.allInfections}
-          </Number.Value>
-        </Number>
-        <Number className="bg-gray-200 text-gray-900">
-          <Number.Value label="aktive Fälle">
-            {generalData.activeCases}
-          </Number.Value>
-        </Number>
-        <Number className="bg-gray-200 text-gray-900">
-          <Number.Value label="Testungen gesamt">
-            {generalData.allTests}
-          </Number.Value>
-        </Number>
-      </div>
     </div>
   );
 }
@@ -441,7 +441,6 @@ export default function Home({
   return (
     <div className="container mx-auto">
       <Header lastUpdated={generalData.lastUpdated} />
-      <Nav />
       <Dashboard
         generalData={generalData}
         epicurve={epicurve}

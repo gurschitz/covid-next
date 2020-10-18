@@ -415,7 +415,6 @@ export default function Home({ epicurve, generalData, hospitalAndTestData }) {
   return (
     <div className="container mx-auto">
       <Header lastUpdated={generalData.lastUpdated} />
-      <Nav />
       <Charts epicurve={epicurve} hospitalAndTestData={hospitalAndTestData} />
       <Footer />
     </div>
