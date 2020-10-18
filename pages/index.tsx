@@ -1,52 +1,57 @@
 import dataApi from "../helpers/dataApi";
 import {
-  ComposedChart,
-  YAxis,
-  CartesianGrid,
+  AreaChart,
   Tooltip,
-  Line,
+  Area,
   Bar,
   ResponsiveContainer,
   BarChart,
 } from "recharts";
 import classNames from "classnames";
-import { format, parseISO, isToday } from "date-fns";
+import { format, parseISO, isToday, isSameDay } from "date-fns";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-
-export async function getStaticProps(context) {
+import { CHART_MARGINS, COLORS } from "../helpers/constants";
+async function fetchCombinedData() {
   const epicurve = await dataApi.fetchEpicurve();
-  const generalData = await dataApi.fetchGeneralData();
   const hospitalAndTestData = await dataApi.fetchHospitalAndTestData();
+  const reversedHospitalAndTestData = hospitalAndTestData.slice().reverse();
+  const reversedEpicurve = epicurve.slice().reverse();
+  const combinedData = reversedHospitalAndTestData
+    .map((v, i) => ({
+      ...v,
+      ...reversedEpicurve[i],
+    }))
+    .reverse()
+    .map((v) => {
+      const cases = v.sevenDayAvgCases ?? 0;
+      const tests = v.sevenDayAvgTests ?? 0;
+      return {
+        ...v,
+        sevenDayAvgNegativeTests: tests - cases,
+        positivityRate: tests > 0 ? cases / tests : 0,
+      };
+    });
+  return combinedData;
+}
+export async function getStaticProps(context) {
+  const generalData = await dataApi.fetchGeneralData();
+  const epicurve = await dataApi.fetchEpicurve();
+  const hospitalAndTestData = await dataApi.fetchHospitalAndTestData();
+  const versionData = await dataApi.fetchVersionData();
+  const combinedData = await fetchCombinedData();
+
   return {
-    props: { epicurve, hospitalAndTestData, generalData },
+    props: {
+      epicurve,
+      hospitalAndTestData,
+      generalData,
+      combinedData,
+      versionData,
+    },
   };
 }
-
-const CHART_MARGINS = { top: 0, bottom: 0, left: 0, right: 0 };
-
-const COLORS = {
-  blue: {
-    light: "#bee3f8",
-    medium: "#4299e1",
-    dark: "#2a4365",
-  },
-  gray: {
-    light: "#cbd5e0",
-    medium: "#a0aec0",
-    dark: "#1a202c",
-  },
-  yellow: {
-    medium: "#d69e2e",
-    dark: "#975a16",
-  },
-  red: {
-    light: "#feb2b2",
-    medium: "#f56565",
-    dark: "#9b2c2c",
-  },
-};
 
 function parseAndFormatDate(day: string, dateFormat: string) {
   return format(parseISO(day), dateFormat);
@@ -83,61 +88,100 @@ Number.Value = ({ children, label, delta = null, className = null }) => (
   </div>
 );
 
-Number.Chart = ({ data, dataKey, color }) => (
-  <div className="h-24 w-full lg:w-3/5">
-    <ResponsiveContainer>
-      <BarChart margin={CHART_MARGINS} data={data}>
-        <Tooltip
-          content={({ payload, active }) => {
-            if (!active || payload == null || !payload[0]) return null;
+Number.Chart = ({ data, dataKey, color, unit = null, type = "bar" }) => {
+  const tooltip = (
+    <Tooltip
+      content={({ payload, active }) => {
+        if (!active || payload == null || !payload[0]) return null;
 
-            const value = payload[0].payload[dataKey];
-            const dayISO = payload[0].payload?.day;
-            return (
-              <div className="relative">
-                <div className="p-1 z-20 relative text-center">
-                  {dayISO && (
-                    <p className="text-sm">
-                      {parseAndFormatDate(dayISO, "dd.MM.yyy")}
-                    </p>
-                  )}
+        const value = payload[0].payload[dataKey];
+        const dayISO = payload[0].payload?.day;
+        const estimatedLabel = payload[0].payload?.estimatedLabel;
+        return (
+          <div className="relative">
+            <div className="p-1 z-20 relative text-center">
+              {dayISO && (
+                <p className="text-sm">
+                  {parseAndFormatDate(dayISO, "dd.MM.yyy")}
+                </p>
+              )}
 
-                  <div className="font-bold">{value}</div>
-                </div>
-                <div className="bg-gray-300 opacity-75 absolute inset-0 z-10"></div>
+              <div className="font-bold">
+                {value}
+                {unit}
+                {estimatedLabel && "*"}
               </div>
-            );
-          }}
-        />
+              {estimatedLabel && (
+                <div className="text-xs">*{estimatedLabel}</div>
+              )}
+            </div>
+            <div className="bg-gray-300 opacity-75 absolute inset-0 z-10"></div>
+          </div>
+        );
+      }}
+    />
+  );
 
-        <Bar
-          dataKey={dataKey}
-          stroke={color}
-          fill={color}
-          fillOpacity={0.9}
-          strokeWidth={0}
-          isAnimationActive={false}
-        />
-      </BarChart>
-    </ResponsiveContainer>
-  </div>
-);
+  return (
+    <div className="h-24 w-full lg:w-3/5">
+      <ResponsiveContainer>
+        {type === "area" ? (
+          <AreaChart margin={CHART_MARGINS} data={data}>
+            {tooltip}
+            <Area
+              type="monotone"
+              dataKey={dataKey}
+              stroke={color}
+              fill={color}
+              isAnimationActive={false}
+              dot={{ stroke: color, fillOpacity: 1 }}
+            />
+          </AreaChart>
+        ) : (
+          <BarChart margin={CHART_MARGINS} data={data}>
+            {tooltip}
+            <Bar
+              dataKey={dataKey}
+              stroke={color}
+              fill={color}
+              fillOpacity={0.9}
+              strokeWidth={0}
+              isAnimationActive={false}
+            />
+          </BarChart>
+        )}
+      </ResponsiveContainer>
+    </div>
+  );
+};
 
-function NewInfections({ generalData, epicurve }) {
+function NewInfections({ generalData, epicurve, versionData }) {
   const lastEntry = epicurve[epicurve.length - 1];
   const day = parseISO(lastEntry?.day);
+  const versionDate = parseISO(versionData.versionDate);
   const today = new Date();
-  const shouldUseLastUpdate = today > day;
-
+  const isLatestUpdateFromToday = isToday(versionDate);
   const previouslyInfected = epicurve
-    .slice(0, shouldUseLastUpdate ? epicurve.length : epicurve.length - 1)
+    .slice(0, isLatestUpdateFromToday ? epicurve.length - 1 : null)
     .reduce((acc, v) => acc + v.cases, 0);
-  const newInfections = generalData.allInfections - previouslyInfected;
-  let label = null;
-  if (shouldUseLastUpdate) {
-    label = "neue Fälle seit dem letztem AGES-Update";
-  } else if (day) {
+
+  let newInfections = generalData.allInfections - previouslyInfected;
+  let label = `neue Fälle seit ${format(versionDate, "dd.MM.yyyy HH:mm")} Uhr`;
+  const reversedEpicurve = epicurve.slice().reverse();
+  let data = reversedEpicurve.slice(0, 14).reverse();
+
+  if (isLatestUpdateFromToday) {
     label = `neue Fälle seit ${format(day, "dd.MM.yyy")} 00:00 Uhr`;
+    data[data.length - 1] = {
+      ...lastEntry,
+      cases: newInfections,
+      estimatedLabel: "Daten unvollständig",
+    };
+  } else {
+    data = [
+      ...data,
+      { cases: newInfections, estimatedLabel: "Daten tlw. von Vortag" },
+    ];
   }
 
   return (
@@ -146,11 +190,7 @@ function NewInfections({ generalData, epicurve }) {
         {newInfections}
       </Number.Value>
 
-      <Number.Chart
-        data={epicurve.slice().reverse().slice(0, 14).reverse()}
-        dataKey="cases"
-        color={COLORS.blue.dark}
-      />
+      <Number.Chart data={data} dataKey="cases" color={COLORS.blue.dark} />
     </Number>
   );
 }
@@ -162,40 +202,108 @@ function CurrentValueWithHistory({
   dataKey,
   color,
   className = null,
-  calculateDiff = false,
+  calculateDelta = false,
+  showDelta = false,
+  unit = null,
+  type = "bar",
+  days = 14,
 }) {
-  const last14Days = data.slice().reverse().slice(0, 14).reverse();
+  const lastNDays = data.slice().reverse().slice(0, days).reverse();
   const lastValueIsToday = isToday(
-    parseISO(last14Days[last14Days.length - 1].day)
+    parseISO(lastNDays[lastNDays.length - 1].day)
   );
   const prevValue = lastValueIsToday
-    ? last14Days[last14Days.length - 2][dataKey]
-    : last14Days[last14Days.length - 1][dataKey];
+    ? lastNDays[lastNDays.length - 2][dataKey]
+    : lastNDays[lastNDays.length - 1][dataKey];
   const diffBasis = lastValueIsToday
-    ? last14Days[last14Days.length - 1][dataKey]
+    ? lastNDays[lastNDays.length - 1][dataKey]
     : value;
-  const currentValue = last14Days[last14Days.length - 1][dataKey];
+  const currentValue = lastNDays[lastNDays.length - 1][dataKey];
+  const delta = calculateDelta ? diffBasis - prevValue : currentValue;
 
   return (
     <Number className={className}>
       <Number.Value
         className="lg:w-2/5"
-        delta={calculateDiff ? diffBasis - prevValue : currentValue}
+        delta={showDelta ? delta : null}
         label={label}
       >
         {value}
+        {unit}
       </Number.Value>
 
-      <Number.Chart data={last14Days} dataKey={dataKey} color={color} />
+      <Number.Chart
+        data={lastNDays}
+        dataKey={dataKey}
+        color={color}
+        unit={unit}
+        type={type}
+      />
     </Number>
   );
 }
 
-function Dashboard({ generalData, epicurve, hospitalAndTestData }) {
+function Dashboard({
+  generalData,
+  epicurve,
+  hospitalAndTestData,
+  combinedData,
+  versionData,
+}) {
   return (
     <div>
       <div className="grid lg:grid-cols-2 gap-2 lg:gap-4 py-1 px-3 lg:py-4 lg:px-4">
-        <NewInfections generalData={generalData} epicurve={epicurve} />
+        <NewInfections
+          generalData={generalData}
+          epicurve={epicurve}
+          versionData={versionData}
+        />
+
+        <CurrentValueWithHistory
+          className="bg-blue-100 text-blue-900"
+          data={combinedData}
+          label="7-Tage-Inzidenz"
+          value={combinedData[combinedData.length - 1].sevenDay}
+          dataKey="sevenDay"
+          color={COLORS.blue.dark}
+          calculateDelta
+          showDelta
+        />
+        <CurrentValueWithHistory
+          className="bg-green-100 text-green-900"
+          data={combinedData}
+          label="Ø Testungen pro Tag (7-Tage-Mittel)"
+          value={combinedData[combinedData.length - 1].sevenDayAvgTests}
+          dataKey="testsPerDay"
+          color={COLORS.green.dark}
+          days={7}
+        />
+
+        <CurrentValueWithHistory
+          className="bg-green-100 text-green-900"
+          data={combinedData}
+          label="Genesen"
+          value={generalData.recovered}
+          dataKey="recoveredPerDay"
+          color={COLORS.green.dark}
+          showDelta
+        />
+
+        <CurrentValueWithHistory
+          className="bg-yellow-100 text-yellow-900"
+          data={combinedData.map((v) => ({
+            ...v,
+            positivityRate: (v.positivityRate * 100).toFixed(2),
+          }))}
+          label="Positivitätsrate"
+          value={(
+            combinedData[combinedData.length - 1].positivityRate * 100
+          ).toFixed(2)}
+          unit="%"
+          dataKey="positivityRate"
+          color={COLORS.yellow.dark}
+          type="area"
+        />
 
         <CurrentValueWithHistory
           className="bg-yellow-100 text-yellow-900"
@@ -204,8 +312,10 @@ function Dashboard({ generalData, epicurve, hospitalAndTestData }) {
           value={generalData.hospitalized}
           dataKey="hospitalized"
           color={COLORS.yellow.dark}
-          calculateDiff
+          calculateDelta
+          showDelta
         />
+
         <CurrentValueWithHistory
           className="bg-red-100 text-red-900"
           data={hospitalAndTestData}
@@ -213,15 +323,17 @@ function Dashboard({ generalData, epicurve, hospitalAndTestData }) {
           value={generalData.icu}
           dataKey="icu"
           color={COLORS.red.dark}
-          calculateDiff
+          calculateDelta
+          showDelta
         />
         <CurrentValueWithHistory
-          className="bg-gray-200 text-gray-900"
+          className="bg-red-100 text-red-900"
           data={epicurve}
           label="Todesfälle"
           value={epicurve.reduce((acc, v) => v.deathsPerDay + acc, 0)}
           dataKey="deathsPerDay"
-          color={COLORS.gray.dark}
+          color={COLORS.red.dark}
+          showDelta
         />
       </div>
       <div className="grid lg:grid-cols-3 gap-2 lg:gap-4 py-1 px-2 lg:py-4 lg:px-4">
@@ -236,14 +348,22 @@ function Dashboard({ generalData, epicurve, hospitalAndTestData }) {
           </Number.Value>
         </Number>
         <Number className="bg-gray-200 text-gray-900">
-          <Number.Value label="Testungen">{generalData.allTests}</Number.Value>
+          <Number.Value label="Testungen gesamt">
+            {generalData.allTests}
+          </Number.Value>
         </Number>
       </div>
     </div>
   );
 }
 
-export default function Home({ epicurve, generalData, hospitalAndTestData }) {
+export default function Home({
+  epicurve,
+  generalData,
+  hospitalAndTestData,
+  combinedData,
+  versionData,
+}) {
   return (
     <div className="container mx-auto">
       <Header lastUpdated={generalData.lastUpdated} />
@@ -252,6 +372,8 @@ export default function Home({ epicurve, generalData, hospitalAndTestData }) {
         generalData={generalData}
         epicurve={epicurve}
         hospitalAndTestData={hospitalAndTestData}
+        combinedData={combinedData}
+        versionData={versionData}
       />
       <Footer />
     </div>

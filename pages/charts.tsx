@@ -12,6 +12,7 @@ import { format, parseISO } from "date-fns";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
+import { CHART_MARGINS, COLORS } from "../helpers/constants";
 
 export async function getStaticProps(context) {
   const epicurve = await dataApi.fetchEpicurve();
@@ -21,30 +22,6 @@ export async function getStaticProps(context) {
     props: { epicurve, hospitalAndTestData, generalData },
   };
 }
-
-const CHART_MARGINS = { top: 0, bottom: 0, left: 0, right: 0 };
-
-const COLORS = {
-  blue: {
-    light: "#bee3f8",
-    medium: "#4299e1",
-    dark: "#2a4365",
-  },
-  gray: {
-    light: "#cbd5e0",
-    medium: "#a0aec0",
-    dark: "#1a202c",
-  },
-  yellow: {
-    medium: "#d69e2e",
-    dark: "#975a16",
-  },
-  red: {
-    light: "#feb2b2",
-    medium: "#f56565",
-    dark: "#9b2c2c",
-  },
-};
 
 function parseAndFormatDate(day: string, dateFormat: string) {
   return format(parseISO(day), dateFormat);

@@ -2,12 +2,15 @@ import { parse, formatISO } from "date-fns";
 import fetchAgesData from "./fetchAgesData";
 
 const KEYS = {
+  version: "VersionsNr",
+  versionDate: "VersionsDate",
   daily: "tägliche Erkrankungen",
   deathcases: "Todesfälle",
   icuOccupancy: "Belegung Intensivbetten in %",
   sevenDay: "SiebenTageInzidenzFaelle",
   deathsPerDay: "AnzahlTotTaeglich",
   cases: "AnzahlFaelle",
+  recoveredPerDay: "AnzahlGeheiltTaeglich",
   generalData: {
     lastUpdated: "LetzteAktualisierung",
     positiveTested: "PositivGetestet",
@@ -16,6 +19,7 @@ const KEYS = {
     icu: "GesIBBel",
     hospitalized: "GesNBBel",
     allTests: "GesTestungen",
+    recovered: "Genesen",
   },
   countryId: "BundeslandID",
   time: "Time",
@@ -30,7 +34,7 @@ const KEYS = {
 const TOTAL_POP = 8901064;
 
 function parseDateTime(time: string) {
-  return parse(time, "dd.MM.yyyy mm:HH:ss", new Date());
+  return parse(time, "dd.MM.yyyy HH:mm:ss", new Date());
 }
 
 function parseDate(day: string) {
@@ -126,6 +130,7 @@ const fetchEpicurve = () =>
           cases: parseInt(row[KEYS.cases]),
           deathsPerDay: parseInt(row[KEYS.deathsPerDay]),
           sevenDay: parseInt(row[KEYS.sevenDay]),
+          recoveredPerDay: parseInt(row[KEYS.recoveredPerDay]),
           day: formatISO(parseDateTime(row[KEYS.time])),
         }));
     })
@@ -174,6 +179,13 @@ const fetchGeneralData = () =>
     icu: generalData[KEYS.generalData.icu],
     activeCases: generalData[KEYS.generalData.activeCases],
     allTests: generalData[KEYS.generalData.allTests],
+    recovered: generalData[KEYS.generalData.recovered],
+  }));
+
+const fetchVersionData = () =>
+  fetchAgesData("Version").then(([row]) => ({
+    version: row[KEYS.version],
+    versionDate: formatISO(parseDateTime(row[KEYS.versionDate])),
   }));
 
 export default {
@@ -182,4 +194,5 @@ export default {
   fetchIcuOccupancy,
   fetchDeathTimeline,
   fetchHospitalAndTestData,
+  fetchVersionData,
 };
