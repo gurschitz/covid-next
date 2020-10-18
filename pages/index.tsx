@@ -189,11 +189,11 @@ function NewInfections({ generalData, combinedData, versionData }) {
     <>
       <div>neue Fälle seit</div>
       <div>
-        {format(versionDate, DATE_TIME_FORMAT, {
+        {format(versionDate, DATE_FORMAT, {
           locale,
           timeZone: "Europe/Vienna",
         })}{" "}
-        Uhr
+        14:02 Uhr
       </div>
     </>
   );
@@ -208,7 +208,6 @@ function NewInfections({ generalData, combinedData, versionData }) {
         <div>
           {format(day, DATE_FORMAT, {
             locale,
-            timeZone: "Europe/Vienna",
           })}{" "}
           00:00 Uhr
         </div>
