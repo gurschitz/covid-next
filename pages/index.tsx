@@ -9,7 +9,8 @@ import {
   YAxis,
 } from "recharts";
 import classNames from "classnames";
-import { format, parseISO, isToday } from "date-fns";
+import { parseISO, isToday } from "date-fns";
+import { format } from "date-fns-tz";
 import { de as locale } from "date-fns/locale";
 
 import Footer from "../components/Footer";
@@ -56,8 +57,10 @@ export async function getStaticProps(context) {
 }
 
 function parseAndFormatDate(day: string, dateFormat: string) {
-  console.log(day);
-  return format(parseISO(day), dateFormat, { locale });
+  return format(parseISO(day), dateFormat, {
+    locale,
+    timeZone: "Europe/Vienna",
+  });
 }
 
 function Number({ children, className }) {
@@ -188,6 +191,7 @@ function NewInfections({ generalData, combinedData, versionData }) {
       <div>
         {format(versionDate, DATE_TIME_FORMAT, {
           locale,
+          timeZone: "Europe/Vienna",
         })}{" "}
         Uhr
       </div>
@@ -204,6 +208,7 @@ function NewInfections({ generalData, combinedData, versionData }) {
         <div>
           {format(day, DATE_FORMAT, {
             locale,
+            timeZone: "Europe/Vienna",
           })}{" "}
           00:00 Uhr
         </div>
