@@ -10,6 +10,7 @@
   "dependencies": {
     "@types/date-fns": "^2.6.0",
     "@types/node": "^14.11.10",
+    "@types/recharts": "^1.8.16",
     "classnames": "^2.2.6",
     "csv-parser": "^2.3.3",
     "date-fns": "^2.16.1",

@@ -150,6 +150,10 @@ const fetchEpicurve = () =>
         return {
           ...row,
           sevenDayAvgCases: Math.round(casesSum / 7),
+          sevenDayAvgCasesPer100: (
+            (Math.round(casesSum / 7) / TOTAL_POP) *
+            100000
+          ).toPrecision(4),
           sevenDayCalculated: (casesSum / TOTAL_POP) * 100000,
           sevenDayDeaths: (deathSum / TOTAL_POP) * 100000,
         };

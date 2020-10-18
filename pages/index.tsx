@@ -6,13 +6,17 @@ import {
   Bar,
   ResponsiveContainer,
   BarChart,
+  YAxis,
 } from "recharts";
 import classNames from "classnames";
-import { format, parseISO, isToday, isSameDay } from "date-fns";
+import { format, parseISO, isToday } from "date-fns";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import { CHART_MARGINS, COLORS } from "../helpers/constants";
+import { COLORS } from "../helpers/constants";
+
+export const CHART_MARGINS = { top: 10, bottom: 0, left: 0, right: 0 };
+
 async function fetchCombinedData() {
   const epicurve = await dataApi.fetchEpicurve();
   const hospitalAndTestData = await dataApi.fetchHospitalAndTestData();
@@ -35,6 +39,7 @@ async function fetchCombinedData() {
     });
   return combinedData;
 }
+
 export async function getStaticProps(context) {
   const generalData = await dataApi.fetchGeneralData();
   const epicurve = await dataApi.fetchEpicurve();
@@ -70,7 +75,13 @@ function Number({ children, className }) {
   );
 }
 
-Number.Value = ({ children, label, delta = null, className = null }) => (
+Number.Value = ({
+  children,
+  label,
+  delta = null,
+  className = null,
+  precision = 0,
+}) => (
   <div className={classNames("p-2 lg:p-4", className)}>
     <div className="flex items-baseline justify-center py-2">
       <div className="font-bold text-2xl lg:text-4xl leading-none">
@@ -78,8 +89,8 @@ Number.Value = ({ children, label, delta = null, className = null }) => (
       </div>
       {delta && delta !== 0 ? (
         <div className="text-sm lg:text-lg leading-none -mr-2 pl-2 w-0">
-          {delta > 0 ? "+" : "-"}
-          {delta}
+          {delta > 0 ? "+" : ""}
+          {delta?.toFixed(precision)}
         </div>
       ) : null}
     </div>
@@ -88,7 +99,14 @@ Number.Value = ({ children, label, delta = null, className = null }) => (
   </div>
 );
 
-Number.Chart = ({ data, dataKey, color, unit = null, type = "bar" }) => {
+Number.Chart = ({
+  data,
+  dataKey,
+  color,
+  className = null,
+  unit = null,
+  type = "bar",
+}) => {
   const tooltip = (
     <Tooltip
       content={({ payload, active }) => {
@@ -123,10 +141,11 @@ Number.Chart = ({ data, dataKey, color, unit = null, type = "bar" }) => {
   );
 
   return (
-    <div className="h-24 w-full lg:w-3/5">
+    <div className={classNames("h-24 lg:h-32", className)}>
       <ResponsiveContainer>
         {type === "area" ? (
           <AreaChart margin={CHART_MARGINS} data={data}>
+            <YAxis hide domain={[0, (dataMax) => dataMax * 1.5]} />
             {tooltip}
             <Area
               type="monotone"
@@ -159,7 +178,6 @@ function NewInfections({ generalData, epicurve, versionData }) {
   const lastEntry = epicurve[epicurve.length - 1];
   const day = parseISO(lastEntry?.day);
   const versionDate = parseISO(versionData.versionDate);
-  const today = new Date();
   const isLatestUpdateFromToday = isToday(versionDate);
   const previouslyInfected = epicurve
     .slice(0, isLatestUpdateFromToday ? epicurve.length - 1 : null)
@@ -186,11 +204,16 @@ function NewInfections({ generalData, epicurve, versionData }) {
 
   return (
     <Number className="bg-blue-100 text-blue-900">
-      <Number.Value className="lg:w-2/5" label={label}>
+      <Number.Value className="lg:w-1/2" label={label}>
         {newInfections}
       </Number.Value>
 
-      <Number.Chart data={data} dataKey="cases" color={COLORS.blue.dark} />
+      <Number.Chart
+        className="w-full lg:w-1/2 xl:w-3/5"
+        data={data}
+        dataKey="cases"
+        color={COLORS.blue.dark}
+      />
     </Number>
   );
 }
@@ -207,6 +230,7 @@ function CurrentValueWithHistory({
   unit = null,
   type = "bar",
   days = 14,
+  precision = 0,
 }) {
   const lastNDays = data.slice().reverse().slice(0, days).reverse();
   const lastValueIsToday = isToday(
@@ -224,15 +248,17 @@ function CurrentValueWithHistory({
   return (
     <Number className={className}>
       <Number.Value
-        className="lg:w-2/5"
+        className="lg:w-1/2 xl:w-2/5"
         delta={showDelta ? delta : null}
         label={label}
+        precision={precision}
       >
         {value}
         {unit}
       </Number.Value>
 
       <Number.Chart
+        className="w-full lg:w-1/2 xl:w-3/5"
         data={lastNDays}
         dataKey={dataKey}
         color={color}
@@ -262,13 +288,26 @@ function Dashboard({
         <CurrentValueWithHistory
           className="bg-blue-100 text-blue-900"
           data={combinedData}
-          label="7-Tage-Inzidenz"
+          label="7-Tage-Inzidenz (pro 100.000 Einwohner)"
           value={combinedData[combinedData.length - 1].sevenDay}
           dataKey="sevenDay"
           color={COLORS.blue.dark}
           calculateDelta
           showDelta
+          type="area"
         />
+        {/* <CurrentValueWithHistory
+          className="bg-blue-100 text-blue-900"
+          data={combinedData}
+          label="7-Tage-Mittel (pro 100.000 Einwohner)"
+          value={combinedData[combinedData.length - 1].sevenDayAvgCasesPer100}
+          dataKey="sevenDayAvgCasesPer100"
+          color={COLORS.blue.dark}
+          calculateDelta
+          showDelta
+          type="area"
+          precision={2}
+        /> */}
         <CurrentValueWithHistory
           className="bg-green-100 text-green-900"
           data={combinedData}
