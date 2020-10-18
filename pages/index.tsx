@@ -12,7 +12,6 @@ import classNames from "classnames";
 import { format, parseISO, isToday } from "date-fns";
 import { de as locale } from "date-fns/locale";
 
-import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { COLORS, DATE_FORMAT, DATE_TIME_FORMAT } from "../helpers/constants";
@@ -24,10 +23,10 @@ async function fetchCombinedData() {
   const hospitalAndTestData = await dataApi.fetchHospitalAndTestData();
   const reversedHospitalAndTestData = hospitalAndTestData.slice().reverse();
   const reversedEpicurve = epicurve.slice().reverse();
-  const combinedData = reversedHospitalAndTestData
+  const combinedData = reversedEpicurve
     .map((v, i) => ({
       ...v,
-      ...reversedEpicurve[i],
+      ...reversedHospitalAndTestData[i],
     }))
     .reverse()
     .map((v) => {
@@ -44,15 +43,11 @@ async function fetchCombinedData() {
 
 export async function getStaticProps(context) {
   const generalData = await dataApi.fetchGeneralData();
-  const epicurve = await dataApi.fetchEpicurve();
-  const hospitalAndTestData = await dataApi.fetchHospitalAndTestData();
   const versionData = await dataApi.fetchVersionData();
   const combinedData = await fetchCombinedData();
 
   return {
     props: {
-      epicurve,
-      hospitalAndTestData,
       generalData,
       combinedData,
       versionData,
@@ -120,11 +115,11 @@ Number.Chart = ({
         return (
           <div className="relative">
             <div className="p-1 z-20 relative text-center">
-              {dayISO && (
-                <p className="text-sm">
-                  {parseAndFormatDate(dayISO, DATE_FORMAT)}
-                </p>
-              )}
+              <p className="text-sm">
+                {dayISO
+                  ? parseAndFormatDate(dayISO, DATE_FORMAT)
+                  : "Ohne Datum"}
+              </p>
 
               <div className="font-bold">
                 {value}
@@ -176,13 +171,13 @@ Number.Chart = ({
   );
 };
 
-function NewInfections({ generalData, epicurve, versionData }) {
-  const lastEntry = epicurve[epicurve.length - 1];
+function NewInfections({ generalData, combinedData, versionData }) {
+  const lastEntry = combinedData[combinedData.length - 1];
   const day = parseISO(lastEntry?.day);
   const versionDate = parseISO(versionData.versionDate);
   const isLatestUpdateFromToday = isToday(versionDate);
-  const previouslyInfected = epicurve
-    .slice(0, isLatestUpdateFromToday ? epicurve.length - 1 : null)
+  const previouslyInfected = combinedData
+    .slice(0, combinedData.length - 1)
     .reduce((acc, v) => acc + v.cases, 0);
 
   let newInfections = generalData.allInfections - previouslyInfected;
@@ -198,8 +193,8 @@ function NewInfections({ generalData, epicurve, versionData }) {
     </>
   );
 
-  const reversedEpicurve = epicurve.slice().reverse();
-  let data = reversedEpicurve.slice(0, 14).reverse();
+  const reversedCombinedData = combinedData.slice().reverse();
+  let data = reversedCombinedData.slice(0, 14).reverse();
 
   if (isLatestUpdateFromToday) {
     label = (
@@ -220,9 +215,13 @@ function NewInfections({ generalData, epicurve, versionData }) {
       estimatedLabel: "Daten unvollständig",
     };
   } else {
+    newInfections = newInfections - lastEntry.cases;
     data = [
       ...data,
-      { cases: newInfections, estimatedLabel: "Daten tlw. von Vortag" },
+      {
+        cases: newInfections,
+        estimatedLabel: "Daten tlw. von Vortag",
+      },
     ];
   }
 
@@ -293,13 +292,7 @@ function CurrentValueWithHistory({
   );
 }
 
-function Dashboard({
-  generalData,
-  epicurve,
-  hospitalAndTestData,
-  combinedData,
-  versionData,
-}) {
+function Dashboard({ generalData, combinedData, versionData }) {
   return (
     <div>
       <div className="grid lg:grid-cols-3 gap-3 px-3 lg:px-4">
@@ -322,7 +315,7 @@ function Dashboard({
       <div className="grid lg:grid-cols-2 gap-3 py-4 px-3 lg:px-4">
         <NewInfections
           generalData={generalData}
-          epicurve={epicurve}
+          combinedData={combinedData}
           versionData={versionData}
         />
 
@@ -398,7 +391,7 @@ function Dashboard({
 
         <CurrentValueWithHistory
           className="bg-yellow-100 text-yellow-900"
-          data={hospitalAndTestData}
+          data={combinedData}
           label="Spital (ohne Intensiv)"
           value={generalData.hospitalized}
           dataKey="hospitalized"
@@ -409,7 +402,7 @@ function Dashboard({
 
         <CurrentValueWithHistory
           className="bg-red-100 text-red-900"
-          data={hospitalAndTestData}
+          data={combinedData}
           label="Intensiv"
           value={generalData.icu}
           dataKey="icu"
@@ -419,9 +412,9 @@ function Dashboard({
         />
         <CurrentValueWithHistory
           className="bg-red-100 text-red-900"
-          data={epicurve}
+          data={combinedData}
           label="Todesfälle"
-          value={epicurve.reduce((acc, v) => v.deathsPerDay + acc, 0)}
+          value={combinedData.reduce((acc, v) => v.deathsPerDay + acc, 0)}
           dataKey="deathsPerDay"
           color={COLORS.red.dark}
           showDelta
@@ -431,20 +424,12 @@ function Dashboard({
   );
 }
 
-export default function Home({
-  epicurve,
-  generalData,
-  hospitalAndTestData,
-  combinedData,
-  versionData,
-}) {
+export default function Home({ generalData, combinedData, versionData }) {
   return (
     <div className="container mx-auto">
       <Header lastUpdated={generalData.lastUpdated} />
       <Dashboard
         generalData={generalData}
-        epicurve={epicurve}
-        hospitalAndTestData={hospitalAndTestData}
         combinedData={combinedData}
         versionData={versionData}
       />
