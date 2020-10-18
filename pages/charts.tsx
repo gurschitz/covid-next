@@ -76,7 +76,12 @@ function CasesChart({ data }: ChartWithData) {
             );
           }}
         />
-        <Bar yAxisId="left" dataKey="cases" fill={COLORS.gray.light} />
+        <Bar
+          yAxisId="left"
+          dataKey="cases"
+          fill={COLORS.gray.light}
+          isAnimationActive={false}
+        />
         <Line
           yAxisId="right"
           type="monotone"
@@ -84,6 +89,7 @@ function CasesChart({ data }: ChartWithData) {
           stroke={COLORS.blue.dark}
           strokeWidth={2}
           dot={false}
+          isAnimationActive={false}
         />
       </ComposedChart>
     </ResponsiveContainer>
@@ -146,12 +152,14 @@ function TestsChart({ data }: ChartWithData) {
           dataKey="sevenDayAvgCases"
           stackId="a"
           fill={COLORS.blue.dark}
+          isAnimationActive={false}
         />
         <Bar
           yAxisId="left"
           dataKey="sevenDayAvgNegativeTests"
           stackId="a"
           fill={COLORS.gray.light}
+          isAnimationActive={false}
         />
 
         <Line
@@ -161,6 +169,7 @@ function TestsChart({ data }: ChartWithData) {
           stroke={COLORS.red.dark}
           strokeWidth={2}
           dot={false}
+          isAnimationActive={false}
         />
       </ComposedChart>
     </ResponsiveContainer>
@@ -217,12 +226,14 @@ function HospitalChart({ data }: ChartWithData) {
           dataKey="hospitalized"
           stackId="a"
           fill={COLORS.yellow.medium}
+          isAnimationActive={false}
         />
         <Bar
           yAxisId="left"
           dataKey="hospitalFree"
           stackId="a"
           fill={COLORS.gray.light}
+          isAnimationActive={false}
         />
         <Line
           yAxisId="right"
@@ -231,6 +242,7 @@ function HospitalChart({ data }: ChartWithData) {
           stroke={COLORS.yellow.dark}
           strokeWidth={2}
           dot={false}
+          isAnimationActive={false}
         />
       </ComposedChart>
     </ResponsiveContainer>
@@ -282,12 +294,14 @@ function ICUChart({ data }: ChartWithData) {
           dataKey="icu"
           stackId="a"
           fill={COLORS.red.medium}
+          isAnimationActive={false}
         />
         <Bar
           yAxisId="left"
           dataKey="icuFree"
           stackId="a"
           fill={COLORS.gray.light}
+          isAnimationActive={false}
         />
         <Line
           yAxisId="right"
@@ -296,6 +310,7 @@ function ICUChart({ data }: ChartWithData) {
           stroke={COLORS.red.dark}
           strokeWidth={2}
           dot={false}
+          isAnimationActive={false}
         />
       </ComposedChart>
     </ResponsiveContainer>
@@ -333,7 +348,12 @@ function DeathsChart({ data }: ChartWithData) {
             );
           }}
         />
-        <Bar yAxisId="left" dataKey="deathsPerDay" fill={COLORS.gray.light} />
+        <Bar
+          yAxisId="left"
+          dataKey="deathsPerDay"
+          fill={COLORS.gray.light}
+          isAnimationActive={false}
+        />
         <Line
           yAxisId="right"
           type="monotone"
@@ -341,6 +361,7 @@ function DeathsChart({ data }: ChartWithData) {
           stroke={COLORS.gray.dark}
           strokeWidth={2}
           dot={false}
+          isAnimationActive={false}
         />
       </ComposedChart>
     </ResponsiveContainer>
