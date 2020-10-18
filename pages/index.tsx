@@ -186,16 +186,34 @@ function NewInfections({ generalData, epicurve, versionData }) {
     .reduce((acc, v) => acc + v.cases, 0);
 
   let newInfections = generalData.allInfections - previouslyInfected;
-  let label = `neue Fälle seit ${format(versionDate, DATE_TIME_FORMAT, {
-    locale,
-  })} Uhr`;
+  let label = (
+    <>
+      <div>neue Fälle seit</div>
+      <div>
+        {format(versionDate, DATE_TIME_FORMAT, {
+          locale,
+        })}{" "}
+        Uhr
+      </div>
+    </>
+  );
+
   const reversedEpicurve = epicurve.slice().reverse();
   let data = reversedEpicurve.slice(0, 14).reverse();
 
   if (isLatestUpdateFromToday) {
-    label = `neue Fälle seit ${format(day, DATE_FORMAT, {
-      locale,
-    })} 00:00 Uhr`;
+    label = (
+      <>
+        <div>neue Fälle seit</div>
+        <div>
+          {format(day, DATE_FORMAT, {
+            locale,
+          })}{" "}
+          00:00 Uhr
+        </div>
+      </>
+    );
+
     data[data.length - 1] = {
       ...lastEntry,
       cases: newInfections,
@@ -294,7 +312,12 @@ function Dashboard({
         <CurrentValueWithHistory
           className="bg-blue-100 text-blue-900"
           data={combinedData}
-          label="7-Tage-Inzidenz (pro 100.000 Einwohner)"
+          label={
+            <>
+              <div>7-Tage-Inzidenz</div>
+              <div>(pro 100.000 Einwohner)</div>
+            </>
+          }
           value={combinedData[combinedData.length - 1].sevenDay}
           dataKey="sevenDay"
           color={COLORS.blue.dark}
@@ -317,7 +340,12 @@ function Dashboard({
         <CurrentValueWithHistory
           className="bg-green-100 text-green-900"
           data={combinedData}
-          label="Ø Testungen pro Tag (7-Tage-Mittel)"
+          label={
+            <>
+              <div>Ø Testungen pro Tag</div>
+              <div>(7-Tage-Mittel)</div>
+            </>
+          }
           value={combinedData[combinedData.length - 1].sevenDayAvgTests}
           dataKey="sevenDayAvgTests"
           color={COLORS.green.dark}
