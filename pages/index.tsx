@@ -274,9 +274,10 @@ function Dashboard({
           data={combinedData}
           label="Ø Testungen pro Tag (7-Tage-Mittel)"
           value={combinedData[combinedData.length - 1].sevenDayAvgTests}
-          dataKey="testsPerDay"
+          dataKey="sevenDayAvgTests"
           color={COLORS.green.dark}
-          days={7}
+          calculateDelta
+          showDelta
         />
 
         <CurrentValueWithHistory

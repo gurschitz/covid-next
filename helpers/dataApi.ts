@@ -94,7 +94,7 @@ const fetchHospitalAndTestData = () =>
         }
         return {
           ...row,
-          sevenDayAvgTests: sum / 7,
+          sevenDayAvgTests: Math.round(sum / 7),
         };
       });
 
@@ -149,7 +149,7 @@ const fetchEpicurve = () =>
         }
         return {
           ...row,
-          sevenDayAvgCases: casesSum / 7,
+          sevenDayAvgCases: Math.round(casesSum / 7),
           sevenDayCalculated: (casesSum / TOTAL_POP) * 100000,
           sevenDayDeaths: (deathSum / TOTAL_POP) * 100000,
         };
