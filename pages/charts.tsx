@@ -14,6 +14,8 @@ import { de as locale } from "date-fns/locale";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { CHART_MARGINS, COLORS, DATE_FORMAT } from "../helpers/constants";
+import { formatNumber } from "../helpers/formatters";
+import Number from "../components/Number";
 
 export async function getStaticProps(context) {
   const epicurve = await dataApi.fetchEpicurve();
@@ -43,7 +45,7 @@ interface ChartWithData {
 function CasesChart({ data }: ChartWithData) {
   return (
     <ResponsiveContainer height={CHART_HEIGHT} width="100%">
-      <ComposedChart data={data} margin={CHART_MARGINS}>
+      <ComposedChart data={data.slice(0, -1)} margin={CHART_MARGINS}>
         <CartesianGrid strokeDasharray="3 3" />
         <YAxis yAxisId="left" orientation="left" />
         <YAxis yAxisId="right" orientation="right" hide />
@@ -61,7 +63,7 @@ function CasesChart({ data }: ChartWithData) {
                   <div className="space-y-2">
                     <div>
                       <div className="text-xs">Fälle</div>
-                      <div className="font-bold">{cases}</div>
+                      <div className="font-bold">{formatNumber(cases)}</div>
                     </div>
                     <div className="flex flex-col">
                       <div className="text-xs">7-Tage-Inzidenz</div>
@@ -109,7 +111,7 @@ function TestsChart({ data }: ChartWithData) {
   });
   return (
     <ResponsiveContainer height={CHART_HEIGHT} width="100%">
-      <ComposedChart data={testData} margin={CHART_MARGINS}>
+      <ComposedChart data={testData.slice(0, -1)} margin={CHART_MARGINS}>
         <CartesianGrid strokeDasharray="3 3" />
         <YAxis yAxisId="left" orientation="left" />
         <YAxis yAxisId="right" orientation="right" hide />
@@ -132,13 +134,15 @@ function TestsChart({ data }: ChartWithData) {
                     <div>
                       <div className="text-xs">Positivitätsrate</div>
                       <div className="font-bold">
-                        {(positivityRate * 100)?.toFixed(2)}%
+                        <Number precision={2} unit="%">
+                          {positivityRate * 100}
+                        </Number>
                       </div>
                     </div>
                     <div>
                       <div className="text-xs">Tests 7-Tage-Mittel</div>
                       <div className="font-bold">
-                        {sevenDayAvgTests?.toFixed(0)}
+                        <Number precision={0}>{sevenDayAvgTests}</Number>
                       </div>
                     </div>
                   </div>
@@ -203,17 +207,23 @@ function HospitalChart({ data }: ChartWithData) {
                   <div className="space-y-2">
                     <div>
                       <div className="text-xs">Belegt</div>
-                      <div className="font-bold">{hospitalized}</div>
+                      <div className="font-bold">
+                        <Number>{hospitalized}</Number>
+                      </div>
                     </div>
                     <div>
                       <div className="text-xs">Frei</div>
-                      <div className="font-bold">{hospitalFree}</div>
+                      <div className="font-bold">
+                        <Number>{hospitalFree}</Number>
+                      </div>
                     </div>
                     <div>
                       <div className="text-xs">Auslastung</div>
-                      <div className="font-bold">{`${(
-                        hospitalOccupancy * 100
-                      ).toFixed(2)}%`}</div>
+                      <div className="font-bold">
+                        <Number precision={2} unit="%">
+                          {hospitalOccupancy * 100}
+                        </Number>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -271,17 +281,23 @@ function ICUChart({ data }: ChartWithData) {
                   <div className="space-y-2">
                     <div>
                       <div className="text-xs">Belegt</div>
-                      <div className="font-bold">{icu}</div>
+                      <div className="font-bold">
+                        <Number>{icu}</Number>
+                      </div>
                     </div>
                     <div>
                       <div className="text-xs">Frei</div>
-                      <div className="font-bold">{icuFree}</div>
+                      <div className="font-bold">
+                        <Number>{icuFree}</Number>
+                      </div>
                     </div>
                     <div>
                       <div className="text-xs">Auslastung</div>
-                      <div className="font-bold">{`${(
-                        icuOccupancy * 100
-                      ).toFixed(2)}%`}</div>
+                      <div className="font-bold">
+                        <Number unit="%" precision={2}>
+                          {icuOccupancy * 100}
+                        </Number>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -333,16 +349,23 @@ function DeathsChart({ data }: ChartWithData) {
             return (
               <div className="relative">
                 <div className="p-4 z-20 relative text-center">
-                  <div className="text-lg">
-                    <div>
-                      Todesfälle:
-                      <span className="font-bold">{deathsPerDay}</span>{" "}
-                    </div>
-                    <div>{sevenDayDeaths?.toFixed(2)} 7-Tage-Inzidenz</div>
-                  </div>
-                  <p className="text-sm">
+                  <p className="text-sm mb-4">
                     {parseAndFormatDate(day, DATE_FORMAT)}
                   </p>
+                  <div className="space-y-2">
+                    <div>
+                      <div className="text-xs">Todesfälle</div>
+                      <div className="font-bold">
+                        <Number>{deathsPerDay}</Number>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs">7-Tage-Inzidenz</div>
+                      <div className="font-bold">
+                        <Number precision={2}>{sevenDayDeaths}</Number>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div className="bg-gray-300 opacity-50 absolute inset-0 z-10"></div>
               </div>

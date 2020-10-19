@@ -179,12 +179,12 @@ const fetchGeneralData = () =>
   fetchAgesData("AllgemeinDaten").then(([generalData]) => ({
     allInfections: parseInt(generalData[KEYS.generalData.positiveTested]),
     lastUpdated: generalData[KEYS.generalData.lastUpdated],
-    deaths: generalData[KEYS.generalData.deaths],
-    hospitalized: generalData[KEYS.generalData.hospitalized],
-    icu: generalData[KEYS.generalData.icu],
-    activeCases: generalData[KEYS.generalData.activeCases],
-    allTests: generalData[KEYS.generalData.allTests],
-    recovered: generalData[KEYS.generalData.recovered],
+    deaths: parseInt(generalData[KEYS.generalData.deaths]),
+    hospitalized: parseInt(generalData[KEYS.generalData.hospitalized]),
+    icu: parseInt(generalData[KEYS.generalData.icu]),
+    activeCases: parseInt(generalData[KEYS.generalData.activeCases]),
+    allTests: parseInt(generalData[KEYS.generalData.allTests]),
+    recovered: parseInt(generalData[KEYS.generalData.recovered]),
   }));
 
 const fetchVersionData = () =>
