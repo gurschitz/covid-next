@@ -34,11 +34,11 @@ const KEYS = {
 const TOTAL_POP = 8901064;
 
 function parseDateTime(time: string) {
-  return parse(time, "dd.MM.yyyy HH:mm:ss", new Date());
+  return parse(`${time} +02`, "dd.MM.yyyy HH:mm:ss X", new Date());
 }
 
 function parseDate(day: string) {
-  return parse(day, "dd.MM.yyyy", new Date());
+  return parse(`${day} +02`, "dd.MM.yyyy X", new Date());
 }
 
 const fetchDeathTimeline = () =>
@@ -177,7 +177,9 @@ const fetchEpicurve = () =>
 const fetchGeneralData = () =>
   fetchAgesData("AllgemeinDaten").then(([generalData]) => ({
     allInfections: parseInt(generalData[KEYS.generalData.positiveTested]),
-    lastUpdated: generalData[KEYS.generalData.lastUpdated],
+    lastUpdated: formatISO(
+      parseDateTime(generalData[KEYS.generalData.lastUpdated])
+    ),
     deaths: parseInt(generalData[KEYS.generalData.deaths]),
     hospitalized: parseInt(generalData[KEYS.generalData.hospitalized]),
     icu: parseInt(generalData[KEYS.generalData.icu]),

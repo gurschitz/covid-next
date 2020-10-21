@@ -1,4 +1,8 @@
+import { format } from "date-fns-tz";
+import { DATE_TIME_FORMAT } from "../helpers/constants";
+import { de as locale } from "date-fns/locale";
 import Nav from "./Nav";
+import { parseISO } from "date-fns";
 
 export default function Header({ lastUpdated = null }) {
   return (
@@ -8,7 +12,13 @@ export default function Header({ lastUpdated = null }) {
           COVID-19 Österreich
         </h1>
         {lastUpdated && (
-          <div className="text-gray-600">Letztes Update: {lastUpdated}</div>
+          <div className="text-gray-600">
+            Letztes Update:{" "}
+            {format(parseISO(lastUpdated), DATE_TIME_FORMAT, {
+              locale,
+              timeZone: "Europe/Vienna",
+            })}{" "}
+          </div>
         )}
       </div>
       <Nav />

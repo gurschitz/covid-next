@@ -7,20 +7,41 @@ import {
   ResponsiveContainer,
   BarChart,
   YAxis,
+  Cell,
+  DotProps,
 } from "recharts";
 import classNames from "classnames";
-import { parseISO, isToday } from "date-fns";
+import { parseISO, isToday, getDay } from "date-fns";
 import { format } from "date-fns-tz";
 import { de as locale } from "date-fns/locale";
 
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import { COLORS, DATE_FORMAT } from "../helpers/constants";
+import { COLORS, DATE_FORMAT, TIME_ZONE } from "../helpers/constants";
 import { formatNumber } from "../helpers/formatters";
 import Number from "../components/Number";
+import { createContext, useContext, useState } from "react";
 
 export const CHART_MARGINS = { top: 10, bottom: 0, left: 5, right: 5 };
 export const AREA_CHART_MARGINS = { top: 10, bottom: 0, left: -5, right: 10 };
+
+const timeZone = TIME_ZONE;
+
+type HighlightedDayContextProps = [Date | null, (day: Date | null) => void];
+
+const HighlightedDayContext = createContext<HighlightedDayContextProps>([
+  null,
+  () => {},
+]);
+
+function HighlightedDayProvider({ children }) {
+  const [day, setDay] = useState<Date | null>(null);
+  return (
+    <HighlightedDayContext.Provider value={[day, setDay]}>
+      {children}
+    </HighlightedDayContext.Provider>
+  );
+}
 
 async function fetchCombinedData() {
   const epicurve = await dataApi.fetchEpicurve();
@@ -62,7 +83,7 @@ export async function getStaticProps(context) {
 function parseAndFormatDate(day: string, dateFormat: string) {
   return format(parseISO(day), dateFormat, {
     locale,
-    timeZone: "Europe/Vienna",
+    timeZone,
   });
 }
 
@@ -70,7 +91,7 @@ function Widget({ children, className }) {
   return (
     <div
       className={classNames(
-        "rounded-lg overflow-hidden flex flex-col lg:flex-row items-center lg:items-end justify-center relative text-center",
+        "rounded-lg overflow-hidden flex flex-col lg:flex-row items-center justify-center relative text-center",
         className
       )}
     >
@@ -110,7 +131,9 @@ Widget.Chart = ({
   className = null,
   unit = null,
   type = "bar",
+  disregardLastEntry = false,
 }) => {
+  const [highlightedDay, setDay] = useContext(HighlightedDayContext);
   const tooltip = (
     <Tooltip
       content={({ payload, active, coordinate }) => {
@@ -141,23 +164,65 @@ Widget.Chart = ({
   );
 
   return (
-    <div className={classNames("h-24 lg:h-32", className)}>
+    <div className={classNames("h-24 lg:h-32 self-end", className)}>
       <ResponsiveContainer>
         {type === "area" ? (
-          <AreaChart margin={AREA_CHART_MARGINS} data={data}>
+          <AreaChart
+            onMouseLeave={() => setDay(null)}
+            margin={AREA_CHART_MARGINS}
+            onMouseMove={(d) => {
+              if (d) {
+                const day = d.activePayload?.[0]?.payload?.day;
+                if (day) {
+                  setDay(parseISO(day));
+                }
+              }
+            }}
+            data={data}
+          >
             <YAxis hide domain={[0, (dataMax) => dataMax * 1.5]} />
             {tooltip}
             <Area
-              type="monotone"
+              type={disregardLastEntry ? "basisOpen" : "basis"}
               dataKey={dataKey}
               stroke={color}
               fill={color}
               isAnimationActive={false}
-              dot={{ stroke: color, fillOpacity: 1 }}
+              dot={({
+                payload,
+                dataKey,
+                ...props
+              }: DotProps & { payload: any; dataKey: string }) => {
+                const entryDay = parseISO(payload?.day);
+                const highlight = getDay(highlightedDay) === getDay(entryDay);
+                return (
+                  <circle
+                    {...props}
+                    className={payload.className}
+                    fillOpacity={1}
+                    fill={highlight ? COLORS.yellow.medium : color}
+                    stroke={highlight ? "white" : color}
+                    strokeWidth={highlight ? 3 : 1}
+                    r={highlight ? 5 : 3}
+                  />
+                );
+              }}
             />
           </AreaChart>
         ) : (
-          <BarChart margin={CHART_MARGINS} data={data}>
+          <BarChart
+            data={data}
+            onMouseLeave={() => setDay(null)}
+            margin={CHART_MARGINS}
+            onMouseMove={(d) => {
+              if (d) {
+                const day = d.activePayload?.[0]?.payload?.day;
+                if (day) {
+                  setDay(parseISO(day));
+                }
+              }
+            }}
+          >
             {tooltip}
             <Bar
               dataKey={dataKey}
@@ -166,7 +231,18 @@ Widget.Chart = ({
               fillOpacity={0.9}
               strokeWidth={0}
               isAnimationActive={false}
-            />
+            >
+              {data.map((entry, index) => {
+                const entryDay = parseISO(entry?.day);
+                const highlight = getDay(highlightedDay) === getDay(entryDay);
+                return (
+                  <Cell
+                    key={index}
+                    fill={highlight ? COLORS.yellow.medium : color}
+                  />
+                );
+              })}
+            </Bar>
           </BarChart>
         )}
       </ResponsiveContainer>
@@ -176,55 +252,43 @@ Widget.Chart = ({
 
 function NewInfections({ generalData, combinedData, versionData, days }) {
   const lastEntry = combinedData[combinedData.length - 1];
-  const day = parseISO(lastEntry?.day);
   const versionDate = parseISO(versionData.versionDate);
-  const isLatestUpdateFromToday = isToday(versionDate);
   const previouslyInfected = combinedData
     .slice(0, combinedData.length - 1)
     .reduce((acc, v) => acc + v.cases, 0);
 
   let newInfections = generalData.allInfections - previouslyInfected;
+  let newInfectionsSinceLastUpdate = newInfections - lastEntry.cases;
+
   let label = (
     <>
-      <div>neue Fälle seit</div>
       <div>
-        {format(versionDate, DATE_FORMAT, {
+        neue Fälle seit{" "}
+        {format(versionDate, "dd.MM. HH:mm", {
           locale,
-          timeZone: "Europe/Vienna",
-        })}{" "}
-        14:02 Uhr
+          timeZone,
+        })}
       </div>
+      <div>(letztes AGES-Update)</div>
     </>
   );
 
   const reversedCombinedData = combinedData.slice().reverse();
   let data = reversedCombinedData.slice(0, days + 1).reverse();
 
-  if (isLatestUpdateFromToday) {
-    label = (
-      <>
-        <div>neue Fälle seit</div>
-        <div>
-          {format(day, DATE_FORMAT, {
-            locale,
-          })}{" "}
-          00:00 Uhr
-        </div>
-      </>
-    );
-  } else {
-    newInfections = newInfections - lastEntry.cases;
-  }
-
   return (
     <Widget className="bg-blue-100 text-blue-900">
-      <Widget.Value className="lg:w-1/2 xl:w-2/5" label={label}>
-        {formatNumber(newInfections)}
-      </Widget.Value>
-
+      <div className="lg:w-1/2 xl:w-2/5">
+        <Widget.Value label={label}>
+          <Number>{newInfectionsSinceLastUpdate}</Number>
+        </Widget.Value>
+      </div>
       <Widget.Chart
         className="w-full lg:w-1/2 xl:w-3/5"
-        data={data.slice(0, -1)}
+        data={[
+          ...data.slice(0, -1),
+          { ...data.slice().pop(), className: "opacity-50" },
+        ]}
         dataKey="cases"
         color={COLORS.blue.dark}
       />
@@ -245,6 +309,7 @@ function CurrentValueWithHistory({
   type = "bar",
   days = 14,
   precision = 0,
+  disregardLastEntry = false,
 }) {
   const lastNDays = data
     .slice()
@@ -282,6 +347,7 @@ function CurrentValueWithHistory({
         color={color}
         unit={unit}
         type={type}
+        disregardLastEntry={disregardLastEntry}
       />
     </Widget>
   );
@@ -330,9 +396,10 @@ function Dashboard({ generalData, combinedData, versionData }) {
         />
         <CurrentValueWithHistory
           className="bg-blue-100 text-blue-900"
-          data={combinedData.slice(0, -1).map((v) => ({
+          data={combinedData.map((v, i) => ({
             ...v,
             positivityRate: (v.positivityRate * 100).toFixed(2),
+            className: i === combinedData.length - 1 ? "opacity-50" : undefined,
           }))}
           label="Positivitätsrate"
           value={(
@@ -340,6 +407,7 @@ function Dashboard({ generalData, combinedData, versionData }) {
           ).toFixed(2)}
           unit="%"
           dataKey="positivityRate"
+          disregardLastEntry
           color={COLORS.blue.dark}
           type="area"
           days={14}
@@ -437,14 +505,16 @@ function Dashboard({ generalData, combinedData, versionData }) {
 
 export default function Home({ generalData, combinedData, versionData }) {
   return (
-    <div className="container mx-auto">
-      <Header lastUpdated={generalData.lastUpdated} />
-      <Dashboard
-        generalData={generalData}
-        combinedData={combinedData}
-        versionData={versionData}
-      />
-      <Footer />
-    </div>
+    <HighlightedDayProvider>
+      <div className="container mx-auto">
+        <Header lastUpdated={generalData.lastUpdated} />
+        <Dashboard
+          generalData={generalData}
+          combinedData={combinedData}
+          versionData={versionData}
+        />
+        <Footer />
+      </div>
+    </HighlightedDayProvider>
   );
 }
