@@ -19,7 +19,8 @@ import { COLORS, DATE_FORMAT } from "../helpers/constants";
 import { formatNumber } from "../helpers/formatters";
 import Number from "../components/Number";
 
-export const CHART_MARGINS = { top: 10, bottom: 0, left: 0, right: 0 };
+export const CHART_MARGINS = { top: 10, bottom: 0, left: 5, right: 5 };
+export const AREA_CHART_MARGINS = { top: 10, bottom: 0, left: -5, right: 10 };
 
 async function fetchCombinedData() {
   const epicurve = await dataApi.fetchEpicurve();
@@ -112,8 +113,9 @@ Widget.Chart = ({
 }) => {
   const tooltip = (
     <Tooltip
-      content={({ payload, active }) => {
-        if (!active || payload == null || !payload[0]) return null;
+      content={({ payload, active, coordinate }) => {
+        if (!active || payload == null || !payload[0] || coordinate?.x < 0)
+          return null;
 
         const value = payload[0].payload[dataKey];
         const dayISO = payload[0].payload?.day;
@@ -142,7 +144,7 @@ Widget.Chart = ({
     <div className={classNames("h-24 lg:h-32", className)}>
       <ResponsiveContainer>
         {type === "area" ? (
-          <AreaChart margin={CHART_MARGINS} data={data}>
+          <AreaChart margin={AREA_CHART_MARGINS} data={data}>
             <YAxis hide domain={[0, (dataMax) => dataMax * 1.5]} />
             {tooltip}
             <Area
@@ -172,7 +174,7 @@ Widget.Chart = ({
   );
 };
 
-function NewInfections({ generalData, combinedData, versionData }) {
+function NewInfections({ generalData, combinedData, versionData, days }) {
   const lastEntry = combinedData[combinedData.length - 1];
   const day = parseISO(lastEntry?.day);
   const versionDate = parseISO(versionData.versionDate);
@@ -196,7 +198,7 @@ function NewInfections({ generalData, combinedData, versionData }) {
   );
 
   const reversedCombinedData = combinedData.slice().reverse();
-  let data = reversedCombinedData.slice(0, 30).reverse();
+  let data = reversedCombinedData.slice(0, days + 1).reverse();
 
   if (isLatestUpdateFromToday) {
     label = (
@@ -244,7 +246,11 @@ function CurrentValueWithHistory({
   days = 14,
   precision = 0,
 }) {
-  const lastNDays = data.slice().reverse().slice(0, days).reverse();
+  const lastNDays = data
+    .slice()
+    .reverse()
+    .slice(0, days + 1)
+    .reverse();
   const lastValueIsToday = isToday(
     parseISO(lastNDays[lastNDays.length - 1].day)
   );
@@ -282,38 +288,46 @@ function CurrentValueWithHistory({
 }
 
 function Dashboard({ generalData, combinedData, versionData }) {
+  const recovered = combinedData.reduce((acc, v) => v.recoveredPerDay + acc, 0);
+  const deaths = combinedData.reduce((acc, v) => v.deathsPerDay + acc, 0);
+  const activeCases = generalData.allInfections - recovered - deaths;
+
   return (
     <div>
-      <div className="grid lg:grid-cols-4 gap-3 px-3 lg:px-4">
+      <div className="grid lg:grid-cols-3 gap-3 px-3 lg:px-4">
         <Widget className="bg-gray-200 text-gray-900">
           <Widget.Value label="positiv getestet">
-            {formatNumber(generalData.allInfections)}
+            <Number>{generalData.allInfections}</Number>
           </Widget.Value>
         </Widget>
         <Widget className="bg-gray-200 text-gray-900">
           <Widget.Value label="aktive Fälle">
-            {formatNumber(generalData.activeCases)}
+            <Number>{activeCases}</Number>
           </Widget.Value>
         </Widget>
         <Widget className="bg-gray-200 text-gray-900">
           <Widget.Value label="Testungen gesamt">
-            {formatNumber(generalData.allTests)}
-          </Widget.Value>
-        </Widget>
-        <Widget className="bg-gray-200 text-gray-900">
-          <Widget.Value label="Ø Testungen (7-Tage-Mittel)">
-            <Number>{combinedData.slice().pop().sevenDayAvgTests}</Number>
+            <Number>{generalData.allTests}</Number>
           </Widget.Value>
         </Widget>
       </div>
-      <div className="grid pt-8 px-3 lg:px-4">
+
+      <div className="grid lg:grid-cols-2 gap-3 py-3 px-3 lg:px-4">
         <NewInfections
           generalData={generalData}
           combinedData={combinedData}
           versionData={versionData}
+          days={14}
         />
-      </div>
-      <div className="grid lg:grid-cols-2 gap-3 py-3 px-3 lg:px-4">
+        <CurrentValueWithHistory
+          className="bg-blue-100 text-blue-900"
+          data={combinedData}
+          label="Ø Testungen (7-Tage-Mittel)"
+          value={combinedData.slice().pop().sevenDayAvgTests}
+          dataKey="testsPerDay"
+          color={COLORS.blue.dark}
+          days={14}
+        />
         <CurrentValueWithHistory
           className="bg-blue-100 text-blue-900"
           data={combinedData.slice(0, -1).map((v) => ({
@@ -328,6 +342,7 @@ function Dashboard({ generalData, combinedData, versionData }) {
           dataKey="positivityRate"
           color={COLORS.blue.dark}
           type="area"
+          days={14}
         />
 
         <CurrentValueWithHistory
@@ -401,7 +416,7 @@ function Dashboard({ generalData, combinedData, versionData }) {
           className="bg-green-100 text-green-900"
           data={combinedData}
           label="Genesen"
-          value={generalData.recovered}
+          value={recovered}
           dataKey="recoveredPerDay"
           color={COLORS.green.dark}
           showDelta
@@ -410,7 +425,7 @@ function Dashboard({ generalData, combinedData, versionData }) {
           className="bg-gray-100 text-gray-900"
           data={combinedData}
           label="Todesfälle"
-          value={combinedData.reduce((acc, v) => v.deathsPerDay + acc, 0)}
+          value={deaths}
           dataKey="deathsPerDay"
           color={COLORS.gray.dark}
           showDelta
