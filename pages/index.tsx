@@ -1,14 +1,14 @@
 import dataApi from "../helpers/dataApi";
 import {
-  AreaChart,
   Tooltip,
-  Area,
   Bar,
   ResponsiveContainer,
   BarChart,
   YAxis,
   Cell,
   DotProps,
+  LineChart,
+  Line,
 } from "recharts";
 import classNames from "classnames";
 import { parseISO, isToday, getDay } from "date-fns";
@@ -23,7 +23,7 @@ import Number from "../components/Number";
 import { createContext, useContext, useState } from "react";
 
 export const CHART_MARGINS = { top: 10, bottom: 0, left: 5, right: 5 };
-export const AREA_CHART_MARGINS = { top: 10, bottom: 0, left: -5, right: 10 };
+export const LINE_CHART_MARGINS = { top: 10, bottom: 0, left: 10, right: 10 };
 
 const timeZone = TIME_ZONE;
 
@@ -131,7 +131,6 @@ Widget.Chart = ({
   className = null,
   unit = null,
   type = "bar",
-  disregardLastEntry = false,
 }) => {
   const [highlightedDay, setDay] = useContext(HighlightedDayContext);
   const tooltip = (
@@ -166,10 +165,10 @@ Widget.Chart = ({
   return (
     <div className={classNames("h-24 lg:h-32 self-end", className)}>
       <ResponsiveContainer>
-        {type === "area" ? (
-          <AreaChart
+        {type === "line" ? (
+          <LineChart
             onMouseLeave={() => setDay(null)}
-            margin={AREA_CHART_MARGINS}
+            margin={LINE_CHART_MARGINS}
             onMouseMove={(d) => {
               if (d) {
                 const day = d.activePayload?.[0]?.payload?.day;
@@ -182,8 +181,7 @@ Widget.Chart = ({
           >
             <YAxis hide domain={[0, (dataMax) => dataMax * 1.5]} />
             {tooltip}
-            <Area
-              type={disregardLastEntry ? "basisOpen" : "basis"}
+            <Line
               dataKey={dataKey}
               stroke={color}
               fill={color}
@@ -208,7 +206,7 @@ Widget.Chart = ({
                 );
               }}
             />
-          </AreaChart>
+          </LineChart>
         ) : (
           <BarChart
             data={data}
@@ -274,7 +272,7 @@ function NewInfections({ generalData, combinedData, versionData, days }) {
   );
 
   const reversedCombinedData = combinedData.slice().reverse();
-  let data = reversedCombinedData.slice(0, days + 1).reverse();
+  let data = reversedCombinedData.slice(0, days).reverse();
 
   return (
     <Widget className="bg-blue-100 text-blue-900">
@@ -309,13 +307,8 @@ function CurrentValueWithHistory({
   type = "bar",
   days = 14,
   precision = 0,
-  disregardLastEntry = false,
 }) {
-  const lastNDays = data
-    .slice()
-    .reverse()
-    .slice(0, days + 1)
-    .reverse();
+  const lastNDays = data.slice().reverse().slice(0, days).reverse();
   const lastValueIsToday = isToday(
     parseISO(lastNDays[lastNDays.length - 1].day)
   );
@@ -347,7 +340,6 @@ function CurrentValueWithHistory({
         color={color}
         unit={unit}
         type={type}
-        disregardLastEntry={disregardLastEntry}
       />
     </Widget>
   );
@@ -407,9 +399,8 @@ function Dashboard({ generalData, combinedData, versionData }) {
           ).toFixed(2)}
           unit="%"
           dataKey="positivityRate"
-          disregardLastEntry
           color={COLORS.blue.dark}
-          type="area"
+          type="line"
           days={14}
         />
 
@@ -427,7 +418,7 @@ function Dashboard({ generalData, combinedData, versionData }) {
           color={COLORS.blue.dark}
           calculateDelta
           showDelta
-          type="area"
+          type="line"
         />
         <CurrentValueWithHistory
           className="bg-red-100 text-red-900"
@@ -440,7 +431,7 @@ function Dashboard({ generalData, combinedData, versionData }) {
           unit="%"
           dataKey="icuOccupancy"
           color={COLORS.red.dark}
-          type="area"
+          type="line"
         />
 
         <CurrentValueWithHistory
@@ -467,7 +458,7 @@ function Dashboard({ generalData, combinedData, versionData }) {
           unit="%"
           dataKey="hospitalOccupancy"
           color={COLORS.yellow.dark}
-          type="area"
+          type="line"
         />
         <CurrentValueWithHistory
           className="bg-yellow-100 text-yellow-900"
