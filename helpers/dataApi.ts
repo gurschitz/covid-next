@@ -34,11 +34,11 @@ const KEYS = {
 const TOTAL_POP = 8901064;
 
 function parseDateTime(time: string) {
-  return parse(`${time} +02`, "dd.MM.yyyy HH:mm:ss X", new Date());
+  return parse(`${time} +01`, "dd.MM.yyyy HH:mm:ss X", new Date());
 }
 
 function parseDate(day: string) {
-  return parse(`${day} +02`, "dd.MM.yyyy X", new Date());
+  return parse(`${day} +01`, "dd.MM.yyyy X", new Date());
 }
 
 const fetchDeathTimeline = () =>
