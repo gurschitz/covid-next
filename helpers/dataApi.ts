@@ -1,4 +1,4 @@
-import { parse, formatISO, format } from "date-fns";
+import { parse, formatISO, format, isBefore } from "date-fns";
 import fetchAgesData from "./fetchAgesData";
 
 const KEYS = {
@@ -34,11 +34,27 @@ const KEYS = {
 const TOTAL_POP = 8901064;
 
 function parseDateTime(time: string) {
-  return parse(`${time} +01`, "dd.MM.yyyy HH:mm:ss X", new Date());
+  const isSummer = isBefore(
+    parse(`${time} +02`, "dd.MM.yyyy HH:mm:ss X", new Date()),
+    new Date(2020, 9, 25)
+  );
+  if (isSummer) {
+    return parse(`${time} +02`, "dd.MM.yyyy HH:mm:ss X", new Date());
+  } else {
+    return parse(`${time} +01`, "dd.MM.yyyy HH:mm:ss X", new Date());
+  }
 }
 
 function parseDate(day: string) {
-  return parse(`${day} +01`, "dd.MM.yyyy X", new Date());
+  const isSummer = isBefore(
+    parse(`${day} +02`, "dd.MM.yyyy X", new Date()),
+    new Date(2020, 9, 25)
+  );
+  if (isSummer) {
+    return parse(`${day} +02`, "dd.MM.yyyy X", new Date());
+  } else {
+    return parse(`${day} +01`, "dd.MM.yyyy X", new Date());
+  }
 }
 
 const fetchDeathTimeline = () =>
