@@ -1,4 +1,4 @@
-import { parse, formatISO, format, isBefore } from "date-fns";
+import { parse, formatISO, format, isBefore, differenceInDays } from "date-fns";
 import fetchAgesData from "./fetchAgesData";
 
 const KEYS = {
@@ -147,7 +147,7 @@ const fetchEpicurve = () =>
           deathsPerDay: parseInt(row[KEYS.deathsPerDay]),
           sevenDay: parseInt(row[KEYS.sevenDay]),
           recoveredPerDay: parseInt(row[KEYS.recoveredPerDay]),
-          day: formatISO(parseDateTime(row[KEYS.time])),
+          day: parseDateTime(row[KEYS.time]),
         }));
     })
     .then((epicurve) => {
@@ -163,6 +163,7 @@ const fetchEpicurve = () =>
         for (let i = 0; i <= 7; i++) {
           deathSum = deathSum + epicurve[index + 7 - i]?.deathsPerDay;
         }
+
         return {
           ...row,
           sevenDayAvgCases: Math.round(casesSum / 7),
@@ -177,7 +178,7 @@ const fetchEpicurve = () =>
 
       const reversedSevenDay = sevenDay.slice().reverse();
 
-      return epicurve
+      const data = epicurve
         .slice()
         .reverse()
         .map((row, i) => {
@@ -188,6 +189,26 @@ const fetchEpicurve = () =>
         })
         .slice()
         .reverse();
+
+      return data.map((row, index) => {
+        const halfCases = row.sevenDayAvgCases / 2;
+        let halfCasesRow: typeof row | null = null;
+
+        for (let i = index; i >= 0; i--) {
+          if (data[i].sevenDayAvgCases < halfCases) {
+            break;
+          }
+          halfCasesRow = data[i];
+        }
+
+        return {
+          ...row,
+          day: formatISO(row.day),
+          doubled: halfCasesRow
+            ? differenceInDays(row.day, halfCasesRow.day)
+            : 0,
+        };
+      });
     });
 
 const fetchGeneralData = () =>
@@ -210,11 +231,33 @@ const fetchVersionData = () =>
     versionDate: formatISO(parseDateTime(row[KEYS.versionDate])),
   }));
 
+async function fetchTimeline() {
+  const epicurve = await fetchEpicurve();
+  const hospitalAndTestData = await fetchHospitalAndTestData();
+  const reversedHospitalAndTestData = hospitalAndTestData.slice().reverse();
+  const reversedEpicurve = epicurve.slice().reverse();
+  const combinedData = reversedEpicurve
+    .map((v, i) => ({
+      ...v,
+      ...reversedHospitalAndTestData[i],
+    }))
+    .reverse()
+    .map((v) => {
+      const cases = v.sevenDayAvgCases ?? 0;
+      const tests = v.sevenDayAvgTests ?? 0;
+      return {
+        ...v,
+        sevenDayAvgNegativeTests: tests - cases,
+        positivityRate: tests > 0 ? cases / tests : 0,
+      };
+    });
+  return combinedData;
+}
+
 export default {
-  fetchEpicurve,
+  fetchTimeline,
   fetchGeneralData,
   fetchIcuOccupancy,
   fetchDeathTimeline,
-  fetchHospitalAndTestData,
   fetchVersionData,
 };

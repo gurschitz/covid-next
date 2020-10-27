@@ -334,6 +334,49 @@ function ICUChart({ data }: ChartWithData) {
   );
 }
 
+function DoublingDays({ data }: ChartWithData) {
+  return (
+    <ResponsiveContainer height={CHART_HEIGHT} width="100%">
+      <ComposedChart data={data.slice(0, -1)} margin={CHART_MARGINS}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <YAxis yAxisId="right" orientation="right" hide />
+        <YAxis yAxisId="left" orientation="left" />
+        <Tooltip
+          content={({ payload, active }) => {
+            if (!active || payload == null || !payload[0]) return null;
+
+            const { day, doubled } = payload[0].payload;
+            return (
+              <div className="relative">
+                <div className="p-4 z-20 relative text-center">
+                  <p className="text-sm mb-4">
+                    {parseAndFormatDate(day, DATE_FORMAT)}
+                  </p>
+                  <div className="space-y-2">
+                    <div>
+                      <div className="text-xs">Verdoppelt</div>
+                      <div className="font-bold">
+                        <Number>{doubled}</Number> Tage
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-300 opacity-50 absolute inset-0 z-10"></div>
+              </div>
+            );
+          }}
+        />
+        <Bar
+          yAxisId="left"
+          dataKey="doubled"
+          fill={COLORS.gray.light}
+          isAnimationActive={false}
+        />
+      </ComposedChart>
+    </ResponsiveContainer>
+  );
+}
+
 function DeathsChart({ data }: ChartWithData) {
   return (
     <ResponsiveContainer height={CHART_HEIGHT} width="100%">
@@ -409,6 +452,9 @@ function Charts({ epicurve, hospitalAndTestData }) {
         <ChartHeader>Erkrankungen</ChartHeader>
         <CasesChart data={epicurve} />
       </div>
+      {/* <div>
+        <DoublingDays data={epicurve} />
+      </div> */}
 
       <div>
         <ChartHeader>Testungen</ChartHeader>
