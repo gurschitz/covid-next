@@ -1,94 +1,53 @@
-import { parse, formatISO, format, isBefore, differenceInDays } from "date-fns";
+import { formatISO } from "date-fns";
 import fetchAgesData from "./fetchAgesData";
+import { parseDate, parseDateTime } from "./parsers";
 
-const KEYS = {
-  version: "VersionsNr",
-  versionDate: "VersionsDate",
-  daily: "tägliche Erkrankungen",
-  deathcases: "Todesfälle",
-  icuOccupancy: "Belegung Intensivbetten in %",
-  sevenDay: "SiebenTageInzidenzFaelle",
-  deathsPerDay: "AnzahlTotTaeglich",
-  cases: "AnzahlFaelle",
-  casesSum: "AnzahlFaelleSum",
-  recoveredPerDay: "AnzahlGeheiltTaeglich",
-  generalData: {
-    lastUpdated: "LetzteAktualisierung",
-    positiveTested: "PositivGetestet",
-    deaths: "TotGemeldet",
-    activeCases: "AktuelleErkrankungen",
-    icu: "GesIBBel",
-    hospitalized: "GesNBBel",
-    allTests: "GesTestungen",
-    recovered: "Genesen",
-  },
+const TOTAL_POP = 8901064;
+
+const HOSPITAL_AND_TEST_TIMELINE_KEYS = {
   countryId: "BundeslandID",
-  time: "Time",
   testsTotal: "TestGesamt",
   hospitalized: "FZHosp",
-  icu: "FZICU",
   hospitalFree: "FZHospFree",
+  icu: "FZICU",
   icuFree: "FZICUFree",
   reportDate: "Meldedat",
 };
 
-const TOTAL_POP = 8901064;
+type HospitalAndTestTimelineRow = {
+  tests: number;
+  hospitalized: number;
+  hospitalFree: number;
+  icu: number;
+  icuFree: number;
+  day: string;
+  hospitalOccupancy: number;
+  icuOccupancy: number;
+  testsPerDay: number;
+};
 
-function parseDateTime(time: string) {
-  const isSummer = isBefore(
-    parse(`${time} +02`, "dd.MM.yyyy HH:mm:ss X", new Date()),
-    new Date(2020, 9, 25)
-  );
-  if (isSummer) {
-    return parse(`${time} +02`, "dd.MM.yyyy HH:mm:ss X", new Date());
-  } else {
-    return parse(`${time} +01`, "dd.MM.yyyy HH:mm:ss X", new Date());
-  }
-}
-
-function parseDate(day: string) {
-  const isSummer = isBefore(
-    parse(`${day} +02`, "dd.MM.yyyy X", new Date()),
-    new Date(2020, 9, 25)
-  );
-  if (isSummer) {
-    return parse(`${day} +02`, "dd.MM.yyyy X", new Date());
-  } else {
-    return parse(`${day} +01`, "dd.MM.yyyy X", new Date());
-  }
-}
-
-const fetchDeathTimeline = () =>
-  fetchAgesData("TodesfaelleTimeline").then((deaths) => {
-    return deaths.map((row, i) => {
-      const previousDeaths =
-        i - 1 >= 0 ? parseInt(deaths[i - 1][KEYS.deathcases]) : 0;
-      return {
-        deathsPerDay: parseInt(row[KEYS.deathcases]) - previousDeaths,
-        day: formatISO(parseDate(row.time)),
-      };
-    });
-  });
-
-const fetchHospitalAndTestData = () =>
+const fetchHospitalAndTestTimeline = (): Promise<
+  HospitalAndTestTimelineRow[]
+> =>
   fetchAgesData("CovidFallzahlen")
     .then((rows) => {
       return rows
-        .filter((row) => row[KEYS.countryId] === "10")
+        .filter(
+          (row) => row[HOSPITAL_AND_TEST_TIMELINE_KEYS.countryId] === "10"
+        )
         .map((row) => ({
-          tests: parseInt(row[KEYS.testsTotal]),
-          hospitalized: parseInt(row[KEYS.hospitalized]),
-          hospitalFree: parseInt(row[KEYS.hospitalFree]),
-          icu: parseInt(row[KEYS.icu]),
-          icuFree: parseInt(row[KEYS.icuFree]),
-          hospitalOccupancy:
-            parseInt(row[KEYS.hospitalized]) /
-            (parseInt(row[KEYS.hospitalFree]) +
-              parseInt(row[KEYS.hospitalized])),
-          icuOccupancy:
-            parseInt(row[KEYS.icu]) /
-            (parseInt(row[KEYS.icuFree]) + parseInt(row[KEYS.icu])),
-          day: formatISO(parseDate(row[KEYS.reportDate])),
+          tests: parseInt(row[HOSPITAL_AND_TEST_TIMELINE_KEYS.testsTotal]),
+          hospitalized: parseInt(
+            row[HOSPITAL_AND_TEST_TIMELINE_KEYS.hospitalized]
+          ),
+          hospitalFree: parseInt(
+            row[HOSPITAL_AND_TEST_TIMELINE_KEYS.hospitalFree]
+          ),
+          icu: parseInt(row[HOSPITAL_AND_TEST_TIMELINE_KEYS.icu]),
+          icuFree: parseInt(row[HOSPITAL_AND_TEST_TIMELINE_KEYS.icuFree]),
+          day: formatISO(
+            parseDate(row[HOSPITAL_AND_TEST_TIMELINE_KEYS.reportDate])
+          ),
         }));
     })
     .then((data) => {
@@ -97,169 +56,183 @@ const fetchHospitalAndTestData = () =>
         const testsPerDay = v.tests - prevValue;
         return {
           ...v,
+          hospitalOccupancy: v.hospitalized / (v.hospitalFree + v.hospitalized),
+          icuOccupancy: v.icu / (v.icuFree + v.icu),
           testsPerDay,
         };
       });
-    })
-    .then((data) => {
-      const sevenDay = data.slice(6).map((row, index) => {
-        let sum = 0;
-        for (let i = 1; i <= 7; i++) {
-          const j = index + 7 - i;
-          const value = data[j];
-          sum = sum + value?.testsPerDay;
-        }
-        return {
-          ...row,
-          sevenDayAvgTests: Math.round(sum / 7),
-        };
-      });
-
-      const reversedSevenDay = sevenDay.slice().reverse();
-
-      return data
-        .slice()
-        .reverse()
-        .map((row, i) => {
-          return {
-            ...row,
-            ...reversedSevenDay[i],
-          };
-        })
-        .slice()
-        .reverse();
     });
 
-const fetchIcuOccupancy = () =>
-  fetchAgesData("IBAuslastung").then((icu) => {
-    return icu.map((row) => ({
-      occupancy: parseFloat(row[KEYS.icuOccupancy].replace(",", ".")),
-      day: formatISO(parseDate(row.time)),
-    }));
+const KEYS = {
+  sevenDay: "SiebenTageInzidenzFaelle",
+  deathsPerDay: "AnzahlTotTaeglich",
+  cases: "AnzahlFaelle",
+  casesSum: "AnzahlFaelleSum",
+  recoveredPerDay: "AnzahlGeheiltTaeglich",
+  countryId: "BundeslandID",
+  time: "Time",
+};
+
+type CasesTimelineRow = {
+  cases: number;
+  casesSum: number;
+  deathsPerDay: number;
+  sevenDay: number;
+  recoveredPerDay: number;
+  day: string;
+};
+
+const fetchCasesTimeline = (): Promise<CasesTimelineRow[]> =>
+  fetchAgesData("CovidFaelle_Timeline").then((timeline) => {
+    return timeline
+      .filter((row) => row[KEYS.countryId] === "10")
+      .map((row) => ({
+        cases: parseInt(row[KEYS.cases]),
+        casesSum: parseInt(row[KEYS.casesSum]),
+        deathsPerDay: parseInt(row[KEYS.deathsPerDay]),
+        sevenDay: parseInt(row[KEYS.sevenDay]),
+        recoveredPerDay: parseInt(row[KEYS.recoveredPerDay]),
+        day: formatISO(parseDateTime(row[KEYS.time])),
+      }));
   });
 
-const fetchEpicurve = () =>
-  fetchAgesData("CovidFaelle_Timeline")
-    .then((timeline) => {
-      return timeline
-        .filter((row) => row[KEYS.countryId] === "10")
-        .map((row) => ({
-          cases: parseInt(row[KEYS.cases]),
-          casesSum: parseInt(row[KEYS.casesSum]),
-          deathsPerDay: parseInt(row[KEYS.deathsPerDay]),
-          sevenDay: parseInt(row[KEYS.sevenDay]),
-          recoveredPerDay: parseInt(row[KEYS.recoveredPerDay]),
-          day: parseDateTime(row[KEYS.time]),
-        }));
-    })
-    .then((epicurve) => {
-      const sevenDay = epicurve.slice(6).map((row, index) => {
-        let casesSum = 0;
-        for (let i = 1; i <= 7; i++) {
-          const j = index + 7 - i;
-          const cases = epicurve[j]?.cases;
-          casesSum = casesSum + cases;
-        }
+export type GeneralData = {
+  allCases: number;
+  lastUpdated: string;
+  deaths: number;
+  hospitalized: number;
+  icu: number;
+  activeCases: number;
+  allTests: number;
+  recovered: number;
+};
 
-        let deathSum = 0;
-        for (let i = 0; i <= 7; i++) {
-          deathSum = deathSum + epicurve[index + 7 - i]?.deathsPerDay;
-        }
+const GENERAL_DATA_KEYS = {
+  lastUpdated: "LetzteAktualisierung",
+  positiveTested: "PositivGetestet",
+  deaths: "TotGemeldet",
+  activeCases: "AktuelleErkrankungen",
+  icu: "GesIBBel",
+  hospitalized: "GesNBBel",
+  allTests: "GesTestungen",
+  recovered: "Genesen",
+};
 
-        return {
-          ...row,
-          sevenDayAvgCases: Math.round(casesSum / 7),
-          sevenDayAvgCasesPer100: (
-            (Math.round(casesSum / 7) / TOTAL_POP) *
-            100000
-          ).toPrecision(4),
-          sevenDayCalculated: (casesSum / TOTAL_POP) * 100000,
-          sevenDayDeaths: (deathSum / TOTAL_POP) * 100000,
-        };
-      });
-
-      const reversedSevenDay = sevenDay.slice().reverse();
-
-      const data = epicurve
-        .slice()
-        .reverse()
-        .map((row, i) => {
-          return {
-            ...row,
-            ...reversedSevenDay[i],
-          };
-        })
-        .slice()
-        .reverse();
-
-      return data.map((row, index) => {
-        const halfCases = row.sevenDayAvgCases / 2;
-        let halfCasesRow: typeof row | null = null;
-
-        for (let i = index; i >= 0; i--) {
-          if (data[i].sevenDayAvgCases < halfCases) {
-            break;
-          }
-          halfCasesRow = data[i];
-        }
-
-        return {
-          ...row,
-          day: formatISO(row.day),
-          doubled: halfCasesRow
-            ? differenceInDays(row.day, halfCasesRow.day)
-            : 0,
-        };
-      });
-    });
-
-const fetchGeneralData = () =>
+const fetchGeneralData = (): Promise<GeneralData> =>
   fetchAgesData("AllgemeinDaten").then(([generalData]) => ({
-    allInfections: parseInt(generalData[KEYS.generalData.positiveTested]),
+    allCases: parseInt(generalData[GENERAL_DATA_KEYS.positiveTested]),
     lastUpdated: formatISO(
-      parseDateTime(generalData[KEYS.generalData.lastUpdated])
+      parseDateTime(generalData[GENERAL_DATA_KEYS.lastUpdated])
     ),
-    deaths: parseInt(generalData[KEYS.generalData.deaths]),
-    hospitalized: parseInt(generalData[KEYS.generalData.hospitalized]),
-    icu: parseInt(generalData[KEYS.generalData.icu]),
-    activeCases: parseInt(generalData[KEYS.generalData.activeCases]),
-    allTests: parseInt(generalData[KEYS.generalData.allTests]),
-    recovered: parseInt(generalData[KEYS.generalData.recovered]),
+    deaths: parseInt(generalData[GENERAL_DATA_KEYS.deaths]),
+    hospitalized: parseInt(generalData[GENERAL_DATA_KEYS.hospitalized]),
+    icu: parseInt(generalData[GENERAL_DATA_KEYS.icu]),
+    activeCases: parseInt(generalData[GENERAL_DATA_KEYS.activeCases]),
+    allTests: parseInt(generalData[GENERAL_DATA_KEYS.allTests]),
+    recovered: parseInt(generalData[GENERAL_DATA_KEYS.recovered]),
   }));
 
-const fetchVersionData = () =>
+export type VersionData = {
+  version: string;
+  versionDate: string;
+};
+
+const VERSION_KEYS = {
+  version: "VersionsNr",
+  versionDate: "VersionsDate",
+};
+
+const fetchVersionData = (): Promise<VersionData> =>
   fetchAgesData("Version").then(([row]) => ({
-    version: row[KEYS.version],
-    versionDate: formatISO(parseDateTime(row[KEYS.versionDate])),
+    version: row[VERSION_KEYS.version],
+    versionDate: formatISO(parseDateTime(row[VERSION_KEYS.versionDate])),
   }));
 
-async function fetchTimeline() {
-  const epicurve = await fetchEpicurve();
-  const hospitalAndTestData = await fetchHospitalAndTestData();
-  const reversedHospitalAndTestData = hospitalAndTestData.slice().reverse();
-  const reversedEpicurve = epicurve.slice().reverse();
-  const combinedData = reversedEpicurve
-    .map((v, i) => ({
-      ...v,
-      ...reversedHospitalAndTestData[i],
-    }))
-    .reverse()
-    .map((v) => {
-      const cases = v.sevenDayAvgCases ?? 0;
-      const tests = v.sevenDayAvgTests ?? 0;
+async function fetchCombinedTimeline(): Promise<
+  (CasesTimelineRow & HospitalAndTestTimelineRow)[]
+> {
+  const casesTimeline = await fetchCasesTimeline();
+  const hospitalAndTestTimeline = await fetchHospitalAndTestTimeline();
+  const reversedHospitalAndTestTimeline = hospitalAndTestTimeline
+    .slice()
+    .reverse();
+  const reversedTimeline = casesTimeline.slice().reverse();
+  return reversedTimeline
+    .map((v, i) => {
       return {
         ...v,
-        sevenDayAvgNegativeTests: tests - cases,
-        positivityRate: tests > 0 ? cases / tests : 0,
+        ...reversedHospitalAndTestTimeline[i],
+      };
+    })
+    .reverse();
+}
+
+type CalculatedRow = {
+  sevenDayAvgTests: number;
+  sevenDayAvgCases: number;
+  sevenDayCalculated: number;
+  sevenDayDeaths: number;
+  sevenDayAvgNegativeTests: number;
+  positivityRate: number;
+};
+
+export type TimelineRow = CasesTimelineRow &
+  HospitalAndTestTimelineRow &
+  CalculatedRow;
+
+async function fetchTimeline(): Promise<TimelineRow[]> {
+  return await fetchCombinedTimeline().then((timeline) => {
+    const sevenDay = timeline.slice(6).map((row, index) => {
+      const testsSum = timeline
+        .slice(index, index + 7)
+        .reduce((acc, val) => acc + val.testsPerDay, 0);
+
+      const casesSum = timeline
+        .slice(index, index + 7)
+        .reduce((acc, val) => acc + val.cases, 0);
+
+      const deathSum = timeline
+        .slice(index, index + 7)
+        .reduce((acc, val) => acc + val.deathsPerDay, 0);
+
+      const sevenDayAvgTests = Math.round(testsSum / 7);
+      const sevenDayAvgCases = Math.round(casesSum / 7);
+      const sevenDayCalculated = (casesSum / TOTAL_POP) * 100000;
+      const sevenDayDeaths = (deathSum / TOTAL_POP) * 100000;
+
+      const sevenDayAvgNegativeTests = sevenDayAvgTests - sevenDayAvgCases;
+      const positivityRate =
+        sevenDayAvgTests > 0 ? sevenDayAvgCases / sevenDayAvgTests : 0;
+
+      return {
+        ...row,
+        sevenDayAvgTests,
+        sevenDayAvgCases,
+        sevenDayCalculated,
+        sevenDayDeaths,
+        sevenDayAvgNegativeTests,
+        positivityRate,
       };
     });
-  return combinedData;
+
+    const reversedSevenDay = sevenDay.slice().reverse();
+
+    return timeline
+      .slice()
+      .reverse()
+      .map((row, i) => {
+        return {
+          ...row,
+          ...reversedSevenDay[i],
+        };
+      })
+      .slice()
+      .reverse();
+  });
 }
 
 export default {
   fetchTimeline,
   fetchGeneralData,
-  fetchIcuOccupancy,
-  fetchDeathTimeline,
   fetchVersionData,
 };

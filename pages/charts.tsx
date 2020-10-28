@@ -99,18 +99,9 @@ function CasesChart({ data }: ChartWithData) {
 }
 
 function TestsChart({ data }: ChartWithData) {
-  const testData = data.map((v) => {
-    const cases = v.sevenDayAvgCases ?? 0;
-    const tests = v.sevenDayAvgTests ?? 0;
-    return {
-      ...v,
-      sevenDayAvgNegativeTests: tests - cases,
-      positivityRate: tests > 0 ? cases / tests : 0,
-    };
-  });
   return (
     <ResponsiveContainer height={CHART_HEIGHT} width="100%">
-      <ComposedChart data={testData.slice(0, -1)} margin={CHART_MARGINS}>
+      <ComposedChart data={data.slice(0, -1)} margin={CHART_MARGINS}>
         <CartesianGrid strokeDasharray="3 3" />
         <YAxis yAxisId="left" orientation="left" />
         <YAxis yAxisId="right" orientation="right" hide />

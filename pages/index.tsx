@@ -1,5 +1,9 @@
 import React from "react";
-import dataApi from "../helpers/dataApi";
+import dataApi, {
+  GeneralData,
+  TimelineRow,
+  VersionData,
+} from "../helpers/dataApi";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { COLORS } from "../helpers/constants";
@@ -8,7 +12,13 @@ import Widget from "../components/Widget";
 import TimelineWidget from "../components/CurrentValueWithHistory";
 import NewInfections from "../components/NewInfections";
 
-export async function getStaticProps(context) {
+type DataProps = {
+  generalData: GeneralData;
+  timeline: TimelineRow[];
+  versionData: VersionData;
+};
+
+export async function getStaticProps(): Promise<{ props: DataProps }> {
   const generalData = await dataApi.fetchGeneralData();
   const versionData = await dataApi.fetchVersionData();
   const timeline = await dataApi.fetchTimeline();
@@ -22,7 +32,7 @@ export async function getStaticProps(context) {
   };
 }
 
-function GeneralData({ allTests, deaths, recovered, allCases }) {
+function GeneralDataWidgets({ allTests, deaths, recovered, allCases }) {
   const activeCases = allCases - recovered - deaths;
 
   return (
@@ -55,7 +65,12 @@ function TimelineWidgets({
 }) {
   return (
     <div className="grid lg:grid-cols-2 gap-3 py-3 px-3 lg:px-4">
-      <NewInfections timeline={timeline} versionData={versionData} days={14} />
+      <NewInfections
+        allCases={generalData.allCases}
+        timeline={timeline}
+        versionData={versionData}
+        days={14}
+      />
 
       <TimelineWidget
         className="bg-blue-100 text-blue-900"
@@ -197,16 +212,16 @@ function TimelineWidgets({
   );
 }
 
-function Dashboard({ generalData, timeline, versionData }) {
+function Dashboard({ generalData, timeline, versionData }: DataProps) {
   const recovered = timeline.reduce((acc, v) => v.recoveredPerDay + acc, 0);
   const deaths = timeline.reduce((acc, v) => v.deathsPerDay + acc, 0);
 
   return (
     <div>
-      <GeneralData
+      <GeneralDataWidgets
         deaths={deaths}
         recovered={recovered}
-        allCases={timeline.slice().pop().casesSum}
+        allCases={generalData.allCases}
         allTests={generalData.allTests}
       />
 
@@ -221,7 +236,11 @@ function Dashboard({ generalData, timeline, versionData }) {
   );
 }
 
-export default function Home({ generalData, timeline, versionData }) {
+export default function Home({
+  generalData,
+  timeline,
+  versionData,
+}: DataProps) {
   return (
     <div className="container mx-auto">
       <Header lastUpdated={generalData.lastUpdated} />

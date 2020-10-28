@@ -5,15 +5,15 @@ import { COLORS, TIME_ZONE as timeZone } from "../helpers/constants";
 import Number from "./Number";
 import Widget from "./Widget";
 
-export default function NewInfections({ timeline, versionData, days }) {
+export default function NewInfections({
+  allCases,
+  timeline,
+  versionData,
+  days,
+}) {
   const lastEntry = timeline[timeline.length - 1];
   const versionDate = parseISO(versionData.versionDate);
-  const previouslyInfected = timeline
-    .slice(0, timeline.length - 1)
-    .reduce((acc, v) => acc + v.cases, 0);
-
-  let newInfections = lastEntry.casesSum - previouslyInfected;
-  let newInfectionsSinceLastUpdate = newInfections - lastEntry.cases;
+  let newInfectionsSinceLastUpdate = allCases - lastEntry.casesSum;
 
   const reversedTimeline = timeline.slice().reverse();
   let data = reversedTimeline.slice(0, days).reverse();
