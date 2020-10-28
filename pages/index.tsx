@@ -1,6 +1,5 @@
 import React from "react";
 import dataApi from "../helpers/dataApi";
-
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { COLORS } from "../helpers/constants";
@@ -23,14 +22,14 @@ export async function getStaticProps(context) {
   };
 }
 
-function GeneralData({ generalData, deaths, recovered }) {
-  const activeCases = generalData.allInfections - recovered - deaths;
+function GeneralData({ allTests, deaths, recovered, allCases }) {
+  const activeCases = allCases - recovered - deaths;
 
   return (
     <div className="grid lg:grid-cols-3 gap-3 px-3 lg:px-4">
       <Widget className="bg-gray-200 text-gray-900">
         <Widget.Value label="positiv getestet">
-          <Number>{generalData.allInfections}</Number>
+          <Number>{allCases}</Number>
         </Widget.Value>
       </Widget>
       <Widget className="bg-gray-200 text-gray-900">
@@ -40,7 +39,7 @@ function GeneralData({ generalData, deaths, recovered }) {
       </Widget>
       <Widget className="bg-gray-200 text-gray-900">
         <Widget.Value label="Testungen gesamt">
-          <Number>{generalData.allTests}</Number>
+          <Number>{allTests}</Number>
         </Widget.Value>
       </Widget>
     </div>
@@ -56,12 +55,7 @@ function TimelineWidgets({
 }) {
   return (
     <div className="grid lg:grid-cols-2 gap-3 py-3 px-3 lg:px-4">
-      <NewInfections
-        generalData={generalData}
-        timeline={timeline}
-        versionData={versionData}
-        days={14}
-      />
+      <NewInfections timeline={timeline} versionData={versionData} days={14} />
 
       <TimelineWidget
         className="bg-blue-100 text-blue-900"
@@ -135,7 +129,7 @@ function TimelineWidgets({
         dataKey="icu"
         days={14}
       >
-        <TimelineWidget.Value label="Intensiv">
+        <TimelineWidget.Value calculateDelta showDelta label="Intensiv">
           {generalData.icu}
         </TimelineWidget.Value>
         <TimelineWidget.BarChart color={COLORS.red.dark} />
@@ -157,7 +151,7 @@ function TimelineWidgets({
         >
           {timeline.slice().pop().hospitalOccupancy * 100}
         </TimelineWidget.Value>
-        <TimelineWidget.BarChart color={COLORS.yellow.dark} />
+        <TimelineWidget.LineChart color={COLORS.yellow.dark} />
       </TimelineWidget>
 
       <TimelineWidget
@@ -166,7 +160,11 @@ function TimelineWidgets({
         dataKey="hospitalized"
         days={14}
       >
-        <TimelineWidget.Value label="Spital (ohne Intensiv)">
+        <TimelineWidget.Value
+          calculateDelta
+          showDelta
+          label="Spital (ohne Intensiv)"
+        >
           {generalData.hospitalized}
         </TimelineWidget.Value>
         <TimelineWidget.BarChart color={COLORS.yellow.dark} />
@@ -175,7 +173,7 @@ function TimelineWidgets({
       <TimelineWidget
         className="bg-green-100 text-green-900"
         data={timeline}
-        dataKey="hospitalized"
+        dataKey="recoveredPerDay"
         days={14}
       >
         <TimelineWidget.Value showDelta label="Genesen">
@@ -208,7 +206,8 @@ function Dashboard({ generalData, timeline, versionData }) {
       <GeneralData
         deaths={deaths}
         recovered={recovered}
-        generalData={generalData}
+        allCases={timeline.slice().pop().casesSum}
+        allTests={generalData.allTests}
       />
 
       <TimelineWidgets

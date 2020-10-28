@@ -10,6 +10,7 @@ const KEYS = {
   sevenDay: "SiebenTageInzidenzFaelle",
   deathsPerDay: "AnzahlTotTaeglich",
   cases: "AnzahlFaelle",
+  casesSum: "AnzahlFaelleSum",
   recoveredPerDay: "AnzahlGeheiltTaeglich",
   generalData: {
     lastUpdated: "LetzteAktualisierung",
@@ -144,6 +145,7 @@ const fetchEpicurve = () =>
         .filter((row) => row[KEYS.countryId] === "10")
         .map((row) => ({
           cases: parseInt(row[KEYS.cases]),
+          casesSum: parseInt(row[KEYS.casesSum]),
           deathsPerDay: parseInt(row[KEYS.deathsPerDay]),
           sevenDay: parseInt(row[KEYS.sevenDay]),
           recoveredPerDay: parseInt(row[KEYS.recoveredPerDay]),
