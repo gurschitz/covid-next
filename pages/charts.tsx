@@ -18,11 +18,10 @@ import { formatNumber } from "../helpers/formatters";
 import Number from "../components/Number";
 
 export async function getStaticProps(context) {
-  const epicurve = await dataApi.fetchEpicurve();
+  const timeline = await dataApi.fetchTimeline();
   const generalData = await dataApi.fetchGeneralData();
-  const hospitalAndTestData = await dataApi.fetchHospitalAndTestData();
   return {
-    props: { epicurve, hospitalAndTestData, generalData },
+    props: { timeline, generalData },
   };
 }
 
@@ -435,22 +434,12 @@ function DeathsChart({ data }: ChartWithData) {
   );
 }
 
-function Charts({ epicurve, hospitalAndTestData }) {
-  const reversedHospitalAndTestData = hospitalAndTestData.slice().reverse();
-  const reversedEpicurve = epicurve.slice().reverse();
-
-  const combinedData = reversedHospitalAndTestData
-    .map((v, i) => ({
-      ...v,
-      ...reversedEpicurve[i],
-    }))
-    .reverse();
-
+function Charts({ timeline }) {
   return (
     <div className="px-3 py-4 lg:px-4 space-y-12">
       <div>
         <ChartHeader>Erkrankungen</ChartHeader>
-        <CasesChart data={epicurve} />
+        <CasesChart data={timeline} />
       </div>
       {/* <div>
         <DoublingDays data={epicurve} />
@@ -458,32 +447,32 @@ function Charts({ epicurve, hospitalAndTestData }) {
 
       <div>
         <ChartHeader>Testungen</ChartHeader>
-        <TestsChart data={combinedData} />
+        <TestsChart data={timeline} />
       </div>
 
       <div>
         <ChartHeader>Spital (ohne Intensiv)</ChartHeader>
-        <HospitalChart data={hospitalAndTestData} />
+        <HospitalChart data={timeline} />
       </div>
 
       <div>
         <ChartHeader>Intensiv</ChartHeader>
-        <ICUChart data={hospitalAndTestData} />
+        <ICUChart data={timeline} />
       </div>
 
       <div>
         <ChartHeader>Todesfälle</ChartHeader>
-        <DeathsChart data={epicurve} />
+        <DeathsChart data={timeline} />
       </div>
     </div>
   );
 }
 
-export default function Home({ epicurve, generalData, hospitalAndTestData }) {
+export default function Home({ timeline, generalData }) {
   return (
     <div className="container mx-auto">
       <Header lastUpdated={generalData.lastUpdated} />
-      <Charts epicurve={epicurve} hospitalAndTestData={hospitalAndTestData} />
+      <Charts timeline={timeline} />
       <Footer />
     </div>
   );
