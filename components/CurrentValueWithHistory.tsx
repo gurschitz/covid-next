@@ -61,7 +61,7 @@ TimelineWidget.LineChart = ({ color }) => {
 TimelineWidget.Value = ({
   showDelta = false,
   children = 0,
-  precision = null,
+  precision = undefined,
   calculateDelta = false,
   label,
 }: {
