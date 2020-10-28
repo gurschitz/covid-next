@@ -3,32 +3,60 @@ import React, { useContext } from "react";
 import { formatNumber } from "../helpers/formatters";
 import Widget from "./Widget";
 
-const TimelineWidgetContext = React.createContext<{
-  data: any[];
-  subset: any[];
-  dataKey: string;
-  unit: string;
-}>({
+interface TimelineWidgetContext<T> {
+  data: T[];
+  subset: T[];
+  dataKey: keyof T & string;
+  unit?: string;
+}
+const TimelineWidgetContext = React.createContext<TimelineWidgetContext<any>>({
   data: [],
   subset: [],
   dataKey: "",
-  unit: "",
 });
 
-export default function TimelineWidget({
+function TimelineWidgetContextProvider<T>({
+  value,
+  children,
+}: {
+  value: TimelineWidgetContext<T>;
+  children: React.ReactNode;
+}) {
+  return (
+    <TimelineWidgetContext.Provider value={value}>
+      {children}
+    </TimelineWidgetContext.Provider>
+  );
+}
+
+interface DateRow {
+  day: string;
+  [k: string]: unknown;
+}
+
+type TimelineWidgetProps<Row extends DateRow> = {
+  dataKey: keyof Row & string;
+  data: Row[];
+  unit?: string;
+  className?: string;
+  days: number;
+  children: React.ReactNode;
+};
+
+export default function TimelineWidget<Row extends DateRow>({
   data,
   children,
   days,
   dataKey,
-  className = "",
-  unit = "",
-}) {
+  className,
+  unit,
+}: TimelineWidgetProps<Row>) {
   const subset = data.slice().reverse().slice(0, days).reverse();
 
   return (
-    <TimelineWidgetContext.Provider value={{ data, subset, dataKey, unit }}>
+    <TimelineWidgetContextProvider value={{ data, subset, dataKey, unit }}>
       <Widget className={className}>{children}</Widget>
-    </TimelineWidgetContext.Provider>
+    </TimelineWidgetContextProvider>
   );
 }
 
@@ -81,6 +109,7 @@ TimelineWidget.Value = ({
     : children;
   const currentValue = subset[subset.length - 1][dataKey];
   const delta = calculateDelta ? diffBasis - prevValue : currentValue;
+
   return (
     <Widget.Value
       className="lg:w-1/2 xl:w-2/5"

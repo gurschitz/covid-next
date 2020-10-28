@@ -17,6 +17,7 @@ import { formatNumber, parseAndFormatDate } from "../helpers/formatters";
 import { COLORS, DATE_FORMAT } from "../helpers/constants";
 import { parseISO } from "date-fns";
 import { getDay } from "date-fns";
+import IntervalButton from "./IntervalButton";
 
 export const CHART_MARGINS = { top: 10, bottom: 0, left: 5, right: 5 };
 export const LINE_CHART_MARGINS = { top: 10, bottom: 0, left: 10, right: 10 };
@@ -83,21 +84,44 @@ function getTooltipContent(dataKey: string, unit?: string) {
   };
 }
 
-Widget.BarChart = ({ data, dataKey, color, className, unit = "" }) => {
-  const [highlightedDay, setDay] = useAtom(highlightedDayAtom);
+interface DateRow {
+  day: string;
+  [k: string]: unknown;
+}
+
+type ChartProps<Row extends DateRow> = {
+  dataKey: keyof Row & string;
+  data: Row[];
+  color: string;
+  unit?: string;
+  className?: string;
+};
+
+Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
+  data,
+  dataKey,
+  color,
+  className,
+  unit,
+}: ChartProps<Row>) {
+  const [highlightedDay, onHighlightDay] = useAtom(highlightedDayAtom);
 
   return (
-    <div className={classNames("h-24 lg:h-32 self-end", className)}>
+    <div className={classNames("h-32 self-end", className)}>
       <ResponsiveContainer>
         <BarChart
           data={data}
-          onMouseLeave={() => setDay(null)}
+          onMouseLeave={() => {
+            if (onHighlightDay) {
+              onHighlightDay(null);
+            }
+          }}
           margin={CHART_MARGINS}
           onMouseMove={(d) => {
             if (d) {
               const day = d.activePayload?.[0]?.payload?.day;
-              if (day) {
-                setDay(parseISO(day));
+              if (day && onHighlightDay) {
+                onHighlightDay(parseISO(day));
               }
             }
           }}
@@ -112,7 +136,7 @@ Widget.BarChart = ({ data, dataKey, color, className, unit = "" }) => {
             isAnimationActive={false}
           >
             {data.map((entry, index) => {
-              const entryDay = parseISO(entry?.day);
+              const entryDay = parseISO(entry.day);
               const highlight =
                 highlightedDay && getDay(highlightedDay) === getDay(entryDay);
               return (
@@ -129,20 +153,30 @@ Widget.BarChart = ({ data, dataKey, color, className, unit = "" }) => {
   );
 };
 
-Widget.LineChart = ({ data, dataKey, color, className = "", unit = "" }) => {
-  const [highlightedDay, setDay] = useAtom(highlightedDayAtom);
+Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
+  data,
+  dataKey,
+  color,
+  className,
+  unit,
+}: ChartProps<Row>) {
+  const [highlightedDay, onHighlightDay] = useAtom(highlightedDayAtom);
 
   return (
-    <div className={classNames("h-24 lg:h-32 self-end", className)}>
+    <div className={classNames("h-32 self-end", className)}>
       <ResponsiveContainer>
         <LineChart
-          onMouseLeave={() => setDay(null)}
+          onMouseLeave={() => {
+            if (onHighlightDay) {
+              onHighlightDay(null);
+            }
+          }}
           margin={LINE_CHART_MARGINS}
           onMouseMove={(d) => {
             if (d) {
               const day = d.activePayload?.[0]?.payload?.day;
-              if (day) {
-                setDay(parseISO(day));
+              if (day && onHighlightDay) {
+                onHighlightDay(parseISO(day));
               }
             }
           }}
