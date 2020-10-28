@@ -4,7 +4,7 @@ import { de as locale } from "date-fns/locale";
 import Nav from "./Nav";
 import { parseISO } from "date-fns";
 
-export default function Header({ lastUpdated = null }) {
+export default function Header({ lastUpdated }: { lastUpdated?: string }) {
   return (
     <div className="p-4 flex flex-col lg:flex-row items-center lg:justify-between">
       <div>
