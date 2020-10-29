@@ -77,7 +77,7 @@ function TimelineWidgets({
 
   return (
     <div className="py-3 px-3 lg:px-4">
-      <div className="flex justify-end items-center space-x-4 w-full pt-4 pb-3">
+      <div className="flex justify-center lg:justify-end items-center space-x-4 w-full pt-4 pb-3">
         <IntervalButton interval={14} />
         <IntervalButton interval={30} />
         <IntervalButton interval={60} />
