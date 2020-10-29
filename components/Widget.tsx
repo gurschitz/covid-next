@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Tooltip,
   Bar,
@@ -9,6 +9,7 @@ import {
   DotProps,
   LineChart,
   Line,
+  CartesianGrid,
 } from "recharts";
 import classNames from "classnames";
 import { highlightedDayAtom } from "../atoms";
@@ -17,7 +18,7 @@ import { formatNumber, parseAndFormatDate } from "../helpers/formatters";
 import { COLORS, DATE_FORMAT } from "../helpers/constants";
 import { parseISO } from "date-fns";
 import { getDay } from "date-fns";
-import IntervalButton from "./IntervalButton";
+import { intervalAtom } from "./IntervalButton";
 
 export const CHART_MARGINS = { top: 10, bottom: 0, left: 5, right: 5 };
 export const LINE_CHART_MARGINS = { top: 10, bottom: 0, left: 10, right: 10 };
@@ -105,6 +106,7 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
   unit,
 }: ChartProps<Row>) {
   const [highlightedDay, onHighlightDay] = useAtom(highlightedDayAtom);
+  const highlightOn = highlightedDay != null;
 
   return (
     <div className={classNames("h-32 self-end", className)}>
@@ -137,12 +139,13 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
           >
             {data.map((entry, index) => {
               const entryDay = parseISO(entry.day);
-              const highlight =
+              const shouldHighlightDay =
                 highlightedDay && getDay(highlightedDay) === getDay(entryDay);
               return (
                 <Cell
+                  // opacity={!highlightOn || shouldHighlightDay ? 1 : 0.4}
                   key={index}
-                  fill={highlight ? COLORS.yellow.medium : color}
+                  fill={shouldHighlightDay ? COLORS.yellow.medium : color}
                 />
               );
             })}
@@ -153,6 +156,12 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
   );
 };
 
+const intervalRadius = {
+  14: { highlighted: 5, default: 3 },
+  30: { highlighted: 4, default: 2 },
+  60: { highlighted: 3, default: 1.5 },
+};
+
 Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
   data,
   dataKey,
@@ -161,6 +170,8 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
   unit,
 }: ChartProps<Row>) {
   const [highlightedDay, onHighlightDay] = useAtom(highlightedDayAtom);
+  const [interval] = useAtom(intervalAtom);
+  const highlightOn = highlightedDay != null;
 
   return (
     <div className={classNames("h-32 self-end", className)}>
@@ -182,7 +193,7 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
           }}
           data={data}
         >
-          <YAxis hide domain={[0, (dataMax) => dataMax * 1.5]} />
+          <YAxis hide />
           <Tooltip content={getTooltipContent(dataKey, unit)} />
           <Line
             dataKey={dataKey}
@@ -195,17 +206,23 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
               ...props
             }: DotProps & { payload: any; dataKey: string }) => {
               const entryDay = parseISO(payload?.day);
-              const highlight =
+              const shouldHighlightDay =
                 highlightedDay && getDay(highlightedDay) === getDay(entryDay);
+              let radius = intervalRadius[interval]?.default;
+
+              if (shouldHighlightDay) {
+                radius = intervalRadius[interval]?.highlighted;
+              }
+
               return (
                 <circle
                   {...props}
                   className={payload.className}
-                  fillOpacity={1}
-                  fill={highlight ? COLORS.yellow.medium : color}
-                  stroke={highlight ? "white" : color}
-                  strokeWidth={highlight ? 3 : 1}
-                  r={highlight ? 5 : 3}
+                  // opacity={!highlightOn || shouldHighlightDay ? 1 : 0.4}
+                  fill={shouldHighlightDay ? COLORS.yellow.medium : color}
+                  stroke={shouldHighlightDay ? "white" : color}
+                  strokeWidth={shouldHighlightDay ? 3 : 1}
+                  r={radius}
                 />
               );
             }}

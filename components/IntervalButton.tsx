@@ -2,7 +2,7 @@ import React from "react";
 import classNames from "classnames";
 import { atom, useAtom } from "jotai";
 
-type Interval = 14 | 30;
+type Interval = 14 | 30 | 60;
 
 type IntervalButtonProps = {
   interval: Interval;

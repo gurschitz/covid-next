@@ -80,6 +80,7 @@ function TimelineWidgets({
       <div className="flex justify-end items-center space-x-4 w-full pt-4 pb-3">
         <IntervalButton interval={14} />
         <IntervalButton interval={30} />
+        <IntervalButton interval={60} />
       </div>
       <div className="grid lg:grid-cols-2 gap-3">
         <NewInfections
@@ -105,7 +106,7 @@ function TimelineWidgets({
           className="bg-blue-100 text-blue-900"
           data={timeline.map((v, i) => ({
             ...v,
-            positivityRate: (v.positivityRate * 100).toFixed(2),
+            positivityRate: v.positivityRate * 100,
             className: i === timeline.length - 1 ? "opacity-50" : undefined,
           }))}
           unit="%"
@@ -143,7 +144,7 @@ function TimelineWidgets({
           className="bg-red-100 text-red-900"
           data={timeline.map((v) => ({
             ...v,
-            icuOccupancy: (v.icuOccupancy * 100).toFixed(2),
+            icuOccupancy: v.icuOccupancy * 100,
           }))}
           dataKey="icuOccupancy"
           days={interval}
@@ -171,7 +172,7 @@ function TimelineWidgets({
           className="bg-yellow-100 text-yellow-900"
           data={timeline.map((v) => ({
             ...v,
-            hospitalOccupancy: (v.hospitalOccupancy * 100).toFixed(2),
+            hospitalOccupancy: v.hospitalOccupancy * 100,
           }))}
           dataKey="hospitalOccupancy"
           days={interval}
