@@ -94,7 +94,7 @@ function TimelineWidgets({
           className="bg-blue-100 text-blue-900"
           data={timeline}
           days={interval}
-          dataKey="testsPerDay"
+          dataKey="sevenDayAvgTests"
         >
           <TimelineWidget.Value label="Ø Testungen (7-Tage-Mittel)">
             {timeline.slice().pop()?.sevenDayAvgTests ?? 0}
