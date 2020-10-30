@@ -1,4 +1,4 @@
-import dataApi from "../helpers/dataApi";
+import dataApi, { GeneralData, TimelineRow } from "../helpers/dataApi";
 import {
   ComposedChart,
   YAxis,
@@ -8,25 +8,35 @@ import {
   Bar,
   ResponsiveContainer,
 } from "recharts";
-import { format, parseISO } from "date-fns";
-import { de as locale } from "date-fns/locale";
-
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { CHART_MARGINS, COLORS, DATE_FORMAT } from "../helpers/constants";
-import { formatNumber } from "../helpers/formatters";
+import { parseAndFormatDate, useNumberFormatter } from "../helpers/formatters";
 import Number from "../components/Number";
+import getMessages from "../helpers/getMessages";
+import { FormattedMessage } from "react-intl";
+import IntlProvider, { useLocale } from "../components/IntlProvider";
 
-export async function getStaticProps(context) {
+type DataProps = {
+  generalData: GeneralData;
+  timeline: TimelineRow[];
+};
+
+type IntlProps = {
+  locale: string;
+  messages: any;
+};
+
+type Props = DataProps & IntlProps;
+
+export async function getStaticProps({ locale }): Promise<{ props: Props }> {
   const timeline = await dataApi.fetchTimeline();
   const generalData = await dataApi.fetchGeneralData();
-  return {
-    props: { timeline, generalData },
-  };
-}
+  const messages = await getMessages(locale);
 
-function parseAndFormatDate(day: string, dateFormat: string) {
-  return format(parseISO(day), dateFormat, { locale });
+  return {
+    props: { timeline, generalData, locale, messages },
+  };
 }
 
 function ChartHeader({ children }) {
@@ -42,6 +52,9 @@ interface ChartWithData {
 }
 
 function CasesChart({ data }: ChartWithData) {
+  const locale = useLocale();
+  const formatNumber = useNumberFormatter();
+
   return (
     <ResponsiveContainer height={CHART_HEIGHT} width="100%">
       <ComposedChart data={data.slice(0, -1)} margin={CHART_MARGINS}>
@@ -57,19 +70,37 @@ function CasesChart({ data }: ChartWithData) {
               <div className="relative">
                 <div className="p-4 z-20 relative text-center">
                   <p className="text-sm mb-4">
-                    {parseAndFormatDate(day, DATE_FORMAT)}
+                    {parseAndFormatDate(day, DATE_FORMAT, locale)}
                   </p>
                   <div className="space-y-2">
                     <div>
-                      <div className="text-xs">Fälle</div>
-                      <div className="font-bold">{formatNumber(cases)}</div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.cases"
+                          defaultMessage="Fälle"
+                        />
+                      </div>
+                      <div className="font-bold">
+                        <Number>{cases}</Number>
+                      </div>
                     </div>
                     <div className="flex flex-col">
-                      <div className="text-xs">7-Tage-Inzidenz</div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.seven_day_incidence"
+                          defaultMessage="7-Tage-Inzidenz"
+                        />
+                      </div>
                       <div className="font-bold">
                         {sevenDayCalculated?.toFixed(2) ?? 0}
                       </div>
-                      <div className="text-xs">per 100.000 Einwohner</div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.per_x_inhabitants"
+                          defaultMessage="per {x} Einwohner"
+                          values={{ x: formatNumber(100000) }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -99,6 +130,8 @@ function CasesChart({ data }: ChartWithData) {
 }
 
 function TestsChart({ data }: ChartWithData) {
+  const locale = useLocale();
+
   return (
     <ResponsiveContainer height={CHART_HEIGHT} width="100%">
       <ComposedChart data={data.slice(0, -1)} margin={CHART_MARGINS}>
@@ -118,21 +151,31 @@ function TestsChart({ data }: ChartWithData) {
               <div className="relative">
                 <div className="p-4 z-20 relative text-center">
                   <p className="text-sm mb-4">
-                    {parseAndFormatDate(day, DATE_FORMAT)}
+                    {parseAndFormatDate(day, DATE_FORMAT, locale)}
                   </p>
                   <div className="space-y-2">
                     <div>
-                      <div className="text-xs">Positivitätsrate</div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.seven_day_average"
+                          defaultMessage="7-Tage-Mittel"
+                        />
+                      </div>
+                      <div className="font-bold">
+                        <Number precision={0}>{sevenDayAvgTests}</Number>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.positivity_rate"
+                          defaultMessage="Positivitätsrate"
+                        />
+                      </div>
                       <div className="font-bold">
                         <Number precision={2} unit="%">
                           {positivityRate * 100}
                         </Number>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs">Tests 7-Tage-Mittel</div>
-                      <div className="font-bold">
-                        <Number precision={0}>{sevenDayAvgTests}</Number>
                       </div>
                     </div>
                   </div>
@@ -172,6 +215,8 @@ function TestsChart({ data }: ChartWithData) {
 }
 
 function HospitalChart({ data }: ChartWithData) {
+  const locale = useLocale();
+
   return (
     <ResponsiveContainer height={CHART_HEIGHT} width="100%">
       <ComposedChart data={data} margin={CHART_MARGINS}>
@@ -192,23 +237,38 @@ function HospitalChart({ data }: ChartWithData) {
               <div className="relative">
                 <div className="p-4 z-20 relative text-center">
                   <p className="text-sm mb-4">
-                    {parseAndFormatDate(day, DATE_FORMAT)}
+                    {parseAndFormatDate(day, DATE_FORMAT, locale)}
                   </p>
                   <div className="space-y-2">
                     <div>
-                      <div className="text-xs">Belegt</div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.occupied"
+                          defaultMessage="Belegt"
+                        />
+                      </div>
                       <div className="font-bold">
                         <Number>{hospitalized}</Number>
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs">Frei</div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.empty"
+                          defaultMessage="Frei"
+                        />
+                      </div>
                       <div className="font-bold">
                         <Number>{hospitalFree}</Number>
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs">Auslastung</div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.occupancy_rate"
+                          defaultMessage="Auslastung"
+                        />
+                      </div>
                       <div className="font-bold">
                         <Number precision={2} unit="%">
                           {hospitalOccupancy * 100}
@@ -251,6 +311,8 @@ function HospitalChart({ data }: ChartWithData) {
 }
 
 function ICUChart({ data }: ChartWithData) {
+  const locale = useLocale();
+
   return (
     <ResponsiveContainer height={CHART_HEIGHT} width="100%">
       <ComposedChart data={data} margin={CHART_MARGINS}>
@@ -266,23 +328,38 @@ function ICUChart({ data }: ChartWithData) {
               <div className="relative">
                 <div className="p-4 z-20 relative text-center">
                   <p className="text-sm mb-4">
-                    {parseAndFormatDate(day, DATE_FORMAT)}
+                    {parseAndFormatDate(day, DATE_FORMAT, locale)}
                   </p>
                   <div className="space-y-2">
                     <div>
-                      <div className="text-xs">Belegt</div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.occupied"
+                          defaultMessage="Belegt"
+                        />
+                      </div>
                       <div className="font-bold">
                         <Number>{icu}</Number>
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs">Frei</div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.empty"
+                          defaultMessage="Frei"
+                        />
+                      </div>
                       <div className="font-bold">
                         <Number>{icuFree}</Number>
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs">Auslastung</div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.occupancyRate"
+                          defaultMessage="Auslastung"
+                        />
+                      </div>
                       <div className="font-bold">
                         <Number unit="%" precision={2}>
                           {icuOccupancy * 100}
@@ -324,50 +401,9 @@ function ICUChart({ data }: ChartWithData) {
   );
 }
 
-function DoublingDays({ data }: ChartWithData) {
-  return (
-    <ResponsiveContainer height={CHART_HEIGHT} width="100%">
-      <ComposedChart data={data.slice(0, -1)} margin={CHART_MARGINS}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <YAxis yAxisId="right" orientation="right" hide />
-        <YAxis yAxisId="left" orientation="left" />
-        <Tooltip
-          content={({ payload, active }) => {
-            if (!active || payload == null || !payload[0]) return null;
-
-            const { day, doubled } = payload[0].payload;
-            return (
-              <div className="relative">
-                <div className="p-4 z-20 relative text-center">
-                  <p className="text-sm mb-4">
-                    {parseAndFormatDate(day, DATE_FORMAT)}
-                  </p>
-                  <div className="space-y-2">
-                    <div>
-                      <div className="text-xs">Verdoppelt</div>
-                      <div className="font-bold">
-                        <Number>{doubled}</Number> Tage
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-gray-300 opacity-50 absolute inset-0 z-10"></div>
-              </div>
-            );
-          }}
-        />
-        <Bar
-          yAxisId="left"
-          dataKey="doubled"
-          fill={COLORS.gray.light}
-          isAnimationActive={false}
-        />
-      </ComposedChart>
-    </ResponsiveContainer>
-  );
-}
-
 function DeathsChart({ data }: ChartWithData) {
+  const locale = useLocale();
+
   return (
     <ResponsiveContainer height={CHART_HEIGHT} width="100%">
       <ComposedChart data={data} margin={CHART_MARGINS}>
@@ -383,17 +419,27 @@ function DeathsChart({ data }: ChartWithData) {
               <div className="relative">
                 <div className="p-4 z-20 relative text-center">
                   <p className="text-sm mb-4">
-                    {parseAndFormatDate(day, DATE_FORMAT)}
+                    {parseAndFormatDate(day, DATE_FORMAT, locale)}
                   </p>
                   <div className="space-y-2">
                     <div>
-                      <div className="text-xs">Todesfälle</div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.tests"
+                          defaultMessage="Testungen"
+                        />
+                      </div>
                       <div className="font-bold">
                         <Number>{deathsPerDay}</Number>
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs">7-Tage-Inzidenz</div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.seven_day_incidence"
+                          defaultMessage="7-Tage-Inzidenz"
+                        />
+                      </div>
                       <div className="font-bold">
                         <Number precision={2}>{sevenDayDeaths}</Number>
                       </div>
@@ -425,46 +471,55 @@ function DeathsChart({ data }: ChartWithData) {
   );
 }
 
-function Charts({ timeline }) {
+export default function Charts({ locale, messages, timeline, generalData }) {
   return (
-    <div className="px-3 py-4 lg:px-4 space-y-12">
-      <div>
-        <ChartHeader>Erkrankungen</ChartHeader>
-        <CasesChart data={timeline} />
-      </div>
-      {/* <div>
-        <DoublingDays data={epicurve} />
-      </div> */}
+    <IntlProvider locale={locale} messages={messages}>
+      <div className="container mx-auto">
+        <Header lastUpdated={generalData.lastUpdated} />
+        <div className="px-3 py-4 lg:px-4 space-y-12">
+          <div>
+            <ChartHeader>
+              <FormattedMessage id="common.cases" defaultMessage="Fälle" />
+            </ChartHeader>
+            <CasesChart data={timeline} />
+          </div>
 
-      <div>
-        <ChartHeader>Testungen</ChartHeader>
-        <TestsChart data={timeline} />
-      </div>
+          <div>
+            <ChartHeader>
+              <FormattedMessage id="common.tests" defaultMessage="Testungen" />
+            </ChartHeader>
+            <TestsChart data={timeline} />
+          </div>
 
-      <div>
-        <ChartHeader>Spital (ohne Intensiv)</ChartHeader>
-        <HospitalChart data={timeline} />
-      </div>
+          <div>
+            <ChartHeader>
+              <FormattedMessage
+                id="common.hospitalized"
+                defaultMessage="Spital (ohne Intensiv)"
+              />
+            </ChartHeader>
+            <HospitalChart data={timeline} />
+          </div>
 
-      <div>
-        <ChartHeader>Intensiv</ChartHeader>
-        <ICUChart data={timeline} />
-      </div>
+          <div>
+            <ChartHeader>
+              <FormattedMessage id="common.icu" defaultMessage="Intensiv" />
+            </ChartHeader>
+            <ICUChart data={timeline} />
+          </div>
 
-      <div>
-        <ChartHeader>Todesfälle</ChartHeader>
-        <DeathsChart data={timeline} />
+          <div>
+            <ChartHeader>
+              <FormattedMessage
+                id="common.deaths"
+                defaultMessage="Todesfälle"
+              />
+            </ChartHeader>
+            <DeathsChart data={timeline} />
+          </div>
+        </div>
+        <Footer />
       </div>
-    </div>
-  );
-}
-
-export default function Home({ timeline, generalData }) {
-  return (
-    <div className="container mx-auto">
-      <Header lastUpdated={generalData.lastUpdated} />
-      <Charts timeline={timeline} />
-      <Footer />
-    </div>
+    </IntlProvider>
   );
 }

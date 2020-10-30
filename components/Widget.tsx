@@ -1,4 +1,3 @@
-import React, { useMemo } from "react";
 import {
   Tooltip,
   Bar,
@@ -9,16 +8,17 @@ import {
   DotProps,
   LineChart,
   Line,
-  CartesianGrid,
 } from "recharts";
 import classNames from "classnames";
 import { highlightedDayAtom } from "../atoms";
 import { useAtom } from "jotai";
-import { formatNumber, parseAndFormatDate } from "../helpers/formatters";
+import { parseAndFormatDate } from "../helpers/formatters";
 import { COLORS, DATE_FORMAT } from "../helpers/constants";
 import { parseISO } from "date-fns";
 import { getDay } from "date-fns";
 import { intervalAtom } from "./IntervalButton";
+import { useLocale } from "./IntlProvider";
+import Number from "./Number";
 
 export const CHART_MARGINS = { top: 10, bottom: 0, left: 5, right: 5 };
 export const LINE_CHART_MARGINS = { top: 10, bottom: 0, left: 10, right: 10 };
@@ -60,7 +60,7 @@ Widget.Value = ({
   </div>
 );
 
-function getTooltipContent(dataKey: string, unit?: string) {
+function getTooltipContent(dataKey: string, locale: string, unit?: string) {
   return ({ payload, active, coordinate }) => {
     if (!active || payload == null || !payload[0] || coordinate?.x < 0)
       return null;
@@ -71,11 +71,13 @@ function getTooltipContent(dataKey: string, unit?: string) {
       <div className="relative">
         <div className="p-1 z-20 relative text-center">
           <p className="text-sm">
-            {dayISO ? parseAndFormatDate(dayISO, DATE_FORMAT) : "Ohne Datum"}
+            {dayISO
+              ? parseAndFormatDate(dayISO, DATE_FORMAT, locale)
+              : "Ohne Datum"}
           </p>
 
           <div className="font-bold">
-            {formatNumber(value)}
+            <Number>{value}</Number>
             {unit}
           </div>
         </div>
@@ -105,8 +107,8 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
   className,
   unit,
 }: ChartProps<Row>) {
+  const locale = useLocale();
   const [highlightedDay, onHighlightDay] = useAtom(highlightedDayAtom);
-  const highlightOn = highlightedDay != null;
 
   return (
     <div className={classNames("h-32 self-end", className)}>
@@ -128,7 +130,7 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
             }
           }}
         >
-          <Tooltip content={getTooltipContent(dataKey, unit)} />
+          <Tooltip content={getTooltipContent(dataKey, locale, unit)} />
           <Bar
             dataKey={dataKey}
             stroke={color}
@@ -169,9 +171,9 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
   className,
   unit,
 }: ChartProps<Row>) {
+  const locale = useLocale();
   const [highlightedDay, onHighlightDay] = useAtom(highlightedDayAtom);
   const [interval] = useAtom(intervalAtom);
-  const highlightOn = highlightedDay != null;
 
   return (
     <div className={classNames("h-32 self-end", className)}>
@@ -194,7 +196,7 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
           data={data}
         >
           <YAxis hide />
-          <Tooltip content={getTooltipContent(dataKey, unit)} />
+          <Tooltip content={getTooltipContent(dataKey, locale, unit)} />
           <Line
             dataKey={dataKey}
             stroke={color}

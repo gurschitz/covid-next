@@ -1,6 +1,7 @@
 import React from "react";
 import classNames from "classnames";
 import { atom, useAtom } from "jotai";
+import { FormattedMessage } from "react-intl";
 
 type Interval = 14 | 30 | 60;
 
@@ -24,7 +25,13 @@ export default function IntervalButton({ interval }: IntervalButtonProps) {
       )}
       onClick={() => setInterval(interval)}
     >
-      {interval} Tage
+      <FormattedMessage
+        id="common.x_days"
+        defaultMessage="{x} Tage"
+        values={{
+          x: interval,
+        }}
+      />
     </button>
   );
 }

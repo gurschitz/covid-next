@@ -1,4 +1,4 @@
-import { formatNumber } from "../helpers/formatters";
+import { useNumberFormatter } from "../helpers/formatters";
 
 type NumberProps = {
   children: number | bigint;
@@ -7,9 +7,11 @@ type NumberProps = {
 };
 
 export default function Number({ children, unit, precision }: NumberProps) {
+  const formatNumber = useNumberFormatter(precision);
+
   return (
     <>
-      {formatNumber(children, precision)}
+      {formatNumber(children)}
       {unit}
     </>
   );

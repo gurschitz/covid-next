@@ -1,6 +1,6 @@
 import { isToday, parseISO } from "date-fns";
 import React, { useContext } from "react";
-import { formatNumber } from "../helpers/formatters";
+import Number from "./Number";
 import Widget from "./Widget";
 
 interface TimelineWidgetContext<T> {
@@ -116,7 +116,7 @@ TimelineWidget.Value = ({
       delta={showDelta ? delta : undefined}
       label={label}
     >
-      {formatNumber(children, precision)}
+      <Number precision={precision}>{children}</Number>
       {unit}
     </Widget.Value>
   );

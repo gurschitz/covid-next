@@ -10,9 +10,13 @@ import { COLORS } from "../helpers/constants";
 import Number from "../components/Number";
 import Widget from "../components/Widget";
 import TimelineWidget from "../components/TimelineWidget";
-import NewInfections from "../components/NewInfections";
+import NewCases from "../components/NewCases";
 import { useAtom } from "jotai";
 import IntervalButton, { intervalAtom } from "../components/IntervalButton";
+import { FormattedMessage } from "react-intl";
+import getMessages from "../helpers/getMessages";
+import { useNumberFormatter } from "../helpers/formatters";
+import IntlProvider from "../components/IntlProvider";
 
 type DataProps = {
   generalData: GeneralData;
@@ -20,16 +24,26 @@ type DataProps = {
   versionData: VersionData;
 };
 
-export async function getStaticProps(): Promise<{ props: DataProps }> {
+type IntlProps = {
+  locale: string;
+  messages: any;
+};
+
+type Props = DataProps & IntlProps;
+
+export async function getStaticProps({ locale }): Promise<{ props: Props }> {
   const generalData = await dataApi.fetchGeneralData();
   const versionData = await dataApi.fetchVersionData();
   const timeline = await dataApi.fetchTimeline();
+  const messages = await getMessages(locale);
 
   return {
     props: {
       generalData,
       timeline,
       versionData,
+      locale,
+      messages,
     },
   };
 }
@@ -40,17 +54,38 @@ function GeneralDataWidgets({ allTests, deaths, recovered, allCases }) {
   return (
     <div className="grid lg:grid-cols-3 gap-3 px-3 lg:px-4">
       <Widget className="bg-gray-200 text-gray-900">
-        <Widget.Value label="positiv getestet">
+        <Widget.Value
+          label={
+            <FormattedMessage
+              id="common.total_cases"
+              defaultMessage="Fälle gesamt"
+            />
+          }
+        >
           <Number>{allCases}</Number>
         </Widget.Value>
       </Widget>
       <Widget className="bg-gray-200 text-gray-900">
-        <Widget.Value label="aktive Fälle">
+        <Widget.Value
+          label={
+            <FormattedMessage
+              id="common.active_cases"
+              defaultMessage="aktive Fälle"
+            />
+          }
+        >
           <Number>{activeCases}</Number>
         </Widget.Value>
       </Widget>
       <Widget className="bg-gray-200 text-gray-900">
-        <Widget.Value label="Testungen gesamt">
+        <Widget.Value
+          label={
+            <FormattedMessage
+              id="common.total_tests"
+              defaultMessage="Testungen gesamt"
+            />
+          }
+        >
           <Number>{allTests}</Number>
         </Widget.Value>
       </Widget>
@@ -73,6 +108,7 @@ function TimelineWidgets({
   deaths,
   recovered,
 }: TimelineWidgetsProps) {
+  const formatNumber = useNumberFormatter();
   const [interval] = useAtom(intervalAtom);
 
   return (
@@ -83,24 +119,45 @@ function TimelineWidgets({
         <IntervalButton interval={60} />
       </div>
       <div className="grid lg:grid-cols-2 gap-3">
-        <NewInfections
+        <TimelineWidget
+          className="bg-blue-100 text-blue-900"
+          data={timeline}
+          dataKey="sevenDay"
+          days={interval}
+        >
+          <TimelineWidget.Value
+            calculateDelta
+            showDelta
+            label={
+              <>
+                <div>
+                  <FormattedMessage
+                    id="common.seven_day_incidence"
+                    defaultMessage="7-Tage-Inzidenz"
+                  />
+                </div>
+                <div>
+                  (
+                  <FormattedMessage
+                    id="common.per_x_inhabitants"
+                    defaultMessage="pro {x} Einwohner"
+                    values={{ x: formatNumber(100000) }}
+                  />
+                  )
+                </div>
+              </>
+            }
+          >
+            {timeline[timeline.length - 1].sevenDay}
+          </TimelineWidget.Value>
+          <TimelineWidget.LineChart color={COLORS.blue.dark} />
+        </TimelineWidget>
+        <NewCases
           allCases={generalData.allCases}
           timeline={timeline}
           versionData={versionData}
           days={interval}
         />
-
-        <TimelineWidget
-          className="bg-blue-100 text-blue-900"
-          data={timeline}
-          days={interval}
-          dataKey="sevenDayAvgTests"
-        >
-          <TimelineWidget.Value label="Ø Testungen (7-Tage-Mittel)">
-            {timeline.slice().pop()?.sevenDayAvgTests ?? 0}
-          </TimelineWidget.Value>
-          <TimelineWidget.BarChart color={COLORS.blue.dark} />
-        </TimelineWidget>
 
         <TimelineWidget
           className="bg-blue-100 text-blue-900"
@@ -113,7 +170,15 @@ function TimelineWidgets({
           dataKey="positivityRate"
           days={interval}
         >
-          <TimelineWidget.Value precision={2} label="Positivitätsrate">
+          <TimelineWidget.Value
+            precision={2}
+            label={
+              <FormattedMessage
+                id="common.positivity_rate"
+                defaultMessage="Positivitätsrate"
+              />
+            }
+          >
             {(timeline.slice(-2, -1).pop()?.positivityRate ?? 0) * 100}
           </TimelineWidget.Value>
           <TimelineWidget.LineChart color={COLORS.blue.dark} />
@@ -122,22 +187,29 @@ function TimelineWidgets({
         <TimelineWidget
           className="bg-blue-100 text-blue-900"
           data={timeline}
-          dataKey="sevenDay"
           days={interval}
+          dataKey="sevenDayAvgTests"
         >
           <TimelineWidget.Value
-            calculateDelta
-            showDelta
             label={
               <>
-                <div>7-Tage-Inzidenz</div>
-                <div>(pro 100.000 Einwohner)</div>
+                {"Ø "}
+                <FormattedMessage
+                  id="common.tests"
+                  defaultMessage="Testungen"
+                />{" "}
+                (
+                <FormattedMessage
+                  id="common.seven_day_average"
+                  defaultMessage="7-Tage-Mittel"
+                />
+                )
               </>
             }
           >
-            {timeline[timeline.length - 1].sevenDay}
+            {timeline.slice().pop()?.sevenDayAvgTests ?? 0}
           </TimelineWidget.Value>
-          <TimelineWidget.LineChart color={COLORS.blue.dark} />
+          <TimelineWidget.BarChart color={COLORS.blue.dark} />
         </TimelineWidget>
 
         <TimelineWidget
@@ -150,7 +222,15 @@ function TimelineWidgets({
           days={interval}
           unit="%"
         >
-          <TimelineWidget.Value label="Intensiv Auslastung" precision={2}>
+          <TimelineWidget.Value
+            label={
+              <FormattedMessage
+                id="common.icu_occupancy_rate"
+                defaultMessage="Instensiv Auslastung"
+              />
+            }
+            precision={2}
+          >
             {(timeline.slice().pop()?.icuOccupancy ?? 0) * 100}
           </TimelineWidget.Value>
           <TimelineWidget.LineChart color={COLORS.red.dark} />
@@ -162,7 +242,13 @@ function TimelineWidgets({
           dataKey="icu"
           days={interval}
         >
-          <TimelineWidget.Value calculateDelta showDelta label="Intensiv">
+          <TimelineWidget.Value
+            calculateDelta
+            showDelta
+            label={
+              <FormattedMessage id="common.icu" defaultMessage="Instensiv" />
+            }
+          >
             {generalData.icu}
           </TimelineWidget.Value>
           <TimelineWidget.BarChart color={COLORS.red.dark} />
@@ -180,7 +266,12 @@ function TimelineWidgets({
         >
           <TimelineWidget.Value
             precision={2}
-            label="Spital Auslastung (ohne Intensiv)"
+            label={
+              <FormattedMessage
+                id="common.hospitalized_occupancy_rate"
+                defaultMessage="Spital Auslastung (ohne Intensiv)"
+              />
+            }
           >
             {(timeline.slice().pop()?.hospitalOccupancy ?? 0) * 100}
           </TimelineWidget.Value>
@@ -196,7 +287,12 @@ function TimelineWidgets({
           <TimelineWidget.Value
             calculateDelta
             showDelta
-            label="Spital (ohne Intensiv)"
+            label={
+              <FormattedMessage
+                id="common.hospitalized"
+                defaultMessage="Spital (ohne Intensiv)"
+              />
+            }
           >
             {generalData.hospitalized}
           </TimelineWidget.Value>
@@ -209,7 +305,15 @@ function TimelineWidgets({
           dataKey="recoveredPerDay"
           days={interval}
         >
-          <TimelineWidget.Value showDelta label="Genesen">
+          <TimelineWidget.Value
+            showDelta
+            label={
+              <FormattedMessage
+                id="common.recovered"
+                defaultMessage="Genesen"
+              />
+            }
+          >
             {recovered}
           </TimelineWidget.Value>
           <TimelineWidget.BarChart color={COLORS.green.dark} />
@@ -221,7 +325,15 @@ function TimelineWidgets({
           dataKey="deathsPerDay"
           days={interval}
         >
-          <TimelineWidget.Value showDelta label="Todesfälle">
+          <TimelineWidget.Value
+            showDelta
+            label={
+              <FormattedMessage
+                id="common.deaths"
+                defaultMessage="Todesfälle"
+              />
+            }
+          >
             {deaths}
           </TimelineWidget.Value>
           <TimelineWidget.BarChart color={COLORS.gray.dark} />
@@ -259,16 +371,20 @@ export default function Home({
   generalData,
   timeline,
   versionData,
-}: DataProps) {
+  locale,
+  messages,
+}: Props) {
   return (
-    <div className="container mx-auto">
-      <Header lastUpdated={generalData.lastUpdated} />
-      <Dashboard
-        generalData={generalData}
-        timeline={timeline}
-        versionData={versionData}
-      />
-      <Footer />
-    </div>
+    <IntlProvider locale={locale} messages={messages}>
+      <div className="container mx-auto">
+        <Header lastUpdated={generalData.lastUpdated} />
+        <Dashboard
+          generalData={generalData}
+          timeline={timeline}
+          versionData={versionData}
+        />
+        <Footer />
+      </div>
+    </IntlProvider>
   );
 }

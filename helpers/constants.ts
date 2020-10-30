@@ -1,35 +1,9 @@
 export const TOTAL_POP = 8901064;
 
-export const KEYS = {
-  daily: "tägliche Erkrankungen",
-  deathcases: "Todesfälle",
-  icuOccupancy: "Belegung Intensivbetten in %",
-  sevenDay: "SiebenTageInzidenzFaelle",
-  deathsPerDay: "AnzahlTotTaeglich",
-  cases: "AnzahlFaelle",
-  generalData: {
-    lastUpdated: "LetzteAktualisierung",
-    positiveTested: "PositivGetestet",
-    deaths: "TotGemeldet",
-    activeCases: "AktuelleErkrankungen",
-    icu: "GesIBBel",
-    hospitalized: "GesNBBel",
-    allTests: "GesTestungen",
-  },
-  countryId: "BundeslandID",
-  time: "Time",
-  testsTotal: "TestGesamt",
-  hospitalized: "FZHosp",
-  icu: "FZICU",
-  hospitalFree: "FZHospFree",
-  icuFree: "FZICUFree",
-  reportDate: "Meldedat",
-};
-
 export const CHART_MARGINS = { top: 0, bottom: 0, left: 0, right: 0 };
 
-export const DATE_FORMAT = "eeeeee, dd.MM.yyyy";
-export const DATE_TIME_FORMAT = `${DATE_FORMAT} HH:mm`;
+export const DATE_FORMAT = "eeeeee, P";
+export const DATE_TIME_FORMAT = `eeeeee, P HH:mm`;
 export const LOCALE = "de-DE";
 export const TIME_ZONE = "Europe/Vienna";
 

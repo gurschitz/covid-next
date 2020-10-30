@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import classNames from "classnames";
+import { FormattedMessage } from "react-intl";
 
 type Props = {
   href: string;
@@ -42,7 +43,10 @@ export default function Nav() {
             className="bg-gray-200 px-4 py-2 rounded focus:outline-none focus:shadow-outline"
             href="/"
           >
-            Dashboard
+            <FormattedMessage
+              id="common.dashboard"
+              defaultMessage="Dashboard"
+            />
           </NavLink>
         </li>
         <li>
@@ -51,7 +55,7 @@ export default function Nav() {
             className="bg-gray-200 px-4 py-2 rounded focus:outline-none focus:shadow-outline"
             href="/charts"
           >
-            Charts
+            <FormattedMessage id="common.charts" defaultMessage="Charts" />
           </NavLink>
         </li>
       </ul>

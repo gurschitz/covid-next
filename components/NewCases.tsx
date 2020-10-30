@@ -1,19 +1,15 @@
 import { parseISO } from "date-fns";
 import { format } from "date-fns-tz";
 import { de as locale } from "date-fns/locale";
+import { FormattedMessage } from "react-intl";
 import { COLORS, TIME_ZONE as timeZone } from "../helpers/constants";
 import Number from "./Number";
 import Widget from "./Widget";
 
-export default function NewInfections({
-  allCases,
-  timeline,
-  versionData,
-  days,
-}) {
+export default function NewCases({ allCases, timeline, versionData, days }) {
   const lastEntry = timeline[timeline.length - 1];
   const versionDate = parseISO(versionData.versionDate);
-  let newInfectionsSinceLastUpdate = allCases - lastEntry.casesSum;
+  let newCasesSinceUpdate = allCases - lastEntry.casesSum;
 
   const reversedTimeline = timeline.slice().reverse();
   let data = reversedTimeline.slice(0, days).reverse();
@@ -24,18 +20,29 @@ export default function NewInfections({
         <Widget.Value
           label={
             <>
+              <FormattedMessage
+                tagName="div"
+                id="dashboard.cases.new_cases_since"
+                defaultMessage="Neue Fälle seit {x}"
+                values={{
+                  x: format(versionDate, "dd.MM. HH:mm", {
+                    locale,
+                    timeZone,
+                  }),
+                }}
+              />
               <div>
-                neue Fälle seit{" "}
-                {format(versionDate, "dd.MM. HH:mm", {
-                  locale,
-                  timeZone,
-                })}
+                (
+                <FormattedMessage
+                  id="dashboard.cases.last_ages_update"
+                  defaultMessage="Letztes AGES-Update"
+                />
+                )
               </div>
-              <div>(letztes AGES-Update)</div>
             </>
           }
         >
-          <Number>{newInfectionsSinceLastUpdate}</Number>
+          <Number>{newCasesSinceUpdate}</Number>
         </Widget.Value>
       </div>
       <Widget.BarChart
