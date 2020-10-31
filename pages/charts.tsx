@@ -57,76 +57,78 @@ function CasesLogChart({ data }: ChartWithData) {
   const formatNumber = useNumberFormatter();
 
   return (
-    <ResponsiveContainer height={500} width="100%">
-      <ComposedChart data={data.slice(0, -1)} margin={CHART_MARGINS}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <YAxis
-          yAxisId="left"
-          orientation="left"
-          scale="log"
-          domain={["auto", "auto"]}
-        />
+    <div className="h-48 lg:h-96">
+      <ResponsiveContainer height="100%" width="100%">
+        <ComposedChart data={data.slice(0, -1)} margin={CHART_MARGINS}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <YAxis
+            yAxisId="left"
+            orientation="left"
+            scale="log"
+            domain={["auto", "auto"]}
+          />
 
-        <Tooltip
-          content={({ payload, active }) => {
-            if (!active || payload == null || !payload[0]) return null;
+          <Tooltip
+            content={({ payload, active }) => {
+              if (!active || payload == null || !payload[0]) return null;
 
-            const { cases, sevenDayCalculated, day } = payload[0].payload;
-            return (
-              <div className="relative">
-                <div className="p-4 z-20 relative text-center">
-                  <p className="text-sm mb-4">
-                    {parseAndFormatDate(day, DATE_FORMAT, locale)}
-                  </p>
-                  <div className="space-y-2">
-                    <div>
-                      <div className="text-xs">
-                        <FormattedMessage
-                          id="common.cases"
-                          defaultMessage="Fälle"
-                        />
+              const { cases, sevenDayCalculated, day } = payload[0].payload;
+              return (
+                <div className="relative">
+                  <div className="p-4 z-20 relative text-center">
+                    <p className="text-sm mb-4">
+                      {parseAndFormatDate(day, DATE_FORMAT, locale)}
+                    </p>
+                    <div className="space-y-2">
+                      <div>
+                        <div className="text-xs">
+                          <FormattedMessage
+                            id="common.cases"
+                            defaultMessage="Fälle"
+                          />
+                        </div>
+                        <div className="font-bold">
+                          <Number>{cases}</Number>
+                        </div>
                       </div>
-                      <div className="font-bold">
-                        <Number>{cases}</Number>
-                      </div>
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="text-xs">
-                        <FormattedMessage
-                          id="common.seven_day_incidence"
-                          defaultMessage="7-Tage-Inzidenz"
-                        />
-                      </div>
-                      <div className="font-bold">
-                        {sevenDayCalculated?.toFixed(2) ?? 0}
-                      </div>
-                      <div className="text-xs">
-                        <FormattedMessage
-                          id="common.per_x_inhabitants"
-                          defaultMessage="per {x} Einwohner"
-                          values={{ x: formatNumber(100000) }}
-                        />
+                      <div className="flex flex-col">
+                        <div className="text-xs">
+                          <FormattedMessage
+                            id="common.seven_day_incidence"
+                            defaultMessage="7-Tage-Inzidenz"
+                          />
+                        </div>
+                        <div className="font-bold">
+                          {sevenDayCalculated?.toFixed(2) ?? 0}
+                        </div>
+                        <div className="text-xs">
+                          <FormattedMessage
+                            id="common.per_x_inhabitants"
+                            defaultMessage="per {x} Einwohner"
+                            values={{ x: formatNumber(100000) }}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <div className="bg-gray-300 opacity-50 absolute inset-0 z-10"></div>
                 </div>
-                <div className="bg-gray-300 opacity-50 absolute inset-0 z-10"></div>
-              </div>
-            );
-          }}
-        />
+              );
+            }}
+          />
 
-        <Line
-          yAxisId="left"
-          type="monotone"
-          dataKey="sevenDayCalculated"
-          stroke={COLORS.blue.dark}
-          strokeWidth={2}
-          dot={false}
-          isAnimationActive={false}
-        />
-      </ComposedChart>
-    </ResponsiveContainer>
+          <Line
+            yAxisId="left"
+            type="monotone"
+            dataKey="sevenDayCalculated"
+            stroke={COLORS.blue.dark}
+            strokeWidth={2}
+            dot={false}
+            isAnimationActive={false}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
