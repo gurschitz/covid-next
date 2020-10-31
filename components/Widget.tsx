@@ -14,7 +14,7 @@ import { highlightedDayAtom } from "../atoms";
 import { useAtom } from "jotai";
 import { parseAndFormatDate } from "../helpers/formatters";
 import { COLORS, DATE_FORMAT } from "../helpers/constants";
-import { parseISO } from "date-fns";
+import { isSameDay, parseISO } from "date-fns";
 import { getDay } from "date-fns";
 import { intervalAtom } from "./IntervalButton";
 import { useLocale } from "./IntlProvider";
@@ -117,14 +117,18 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
           data={data}
           margin={CHART_MARGINS}
           onClick={(d) => {
-            if (highlightedDay != null) {
-              onHighlightDay(null);
-              return;
-            }
             if (d) {
               const day = d.activePayload?.[0]?.payload?.day;
               if (day && onHighlightDay) {
-                onHighlightDay(parseISO(day));
+                const parsedDay = parseISO(day);
+                if (
+                  highlightedDay != null &&
+                  isSameDay(highlightedDay, parsedDay)
+                ) {
+                  onHighlightDay(null);
+                } else {
+                  onHighlightDay(parsedDay);
+                }
               }
             }
           }}
@@ -144,7 +148,6 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
                 highlightedDay && getDay(highlightedDay) === getDay(entryDay);
               return (
                 <Cell
-                  // opacity={!highlightOn || shouldHighlightDay ? 1 : 0.4}
                   key={index}
                   fill={shouldHighlightDay ? COLORS.yellow.medium : color}
                 />
@@ -180,14 +183,18 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
         <LineChart
           margin={LINE_CHART_MARGINS}
           onClick={(d) => {
-            if (highlightedDay != null) {
-              onHighlightDay(null);
-              return;
-            }
             if (d) {
               const day = d.activePayload?.[0]?.payload?.day;
               if (day && onHighlightDay) {
-                onHighlightDay(parseISO(day));
+                const parsedDay = parseISO(day);
+                if (
+                  highlightedDay != null &&
+                  isSameDay(highlightedDay, parsedDay)
+                ) {
+                  onHighlightDay(null);
+                } else {
+                  onHighlightDay(parsedDay);
+                }
               }
             }
           }}
