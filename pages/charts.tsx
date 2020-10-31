@@ -581,8 +581,8 @@ function Charts({ generalData, timeline }: DataProps) {
           <div>
             <ChartHeader>
               <FormattedMessage
-                id="common.cases_logarithmic"
-                defaultMessage="Fälle (logarithmische Skala)"
+                id="common.seven_day_incidence_logarithmic"
+                defaultMessage="7-Tage-Inzidenz (logarithmische Skala)"
               />
             </ChartHeader>
             <CasesLogChart data={timeline} />

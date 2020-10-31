@@ -4,7 +4,7 @@
   "common.charts": "Charts",
   "common.dashboard": "Dashboard",
   "common.cases": "cases",
-  "common.cases_logarithmic": "Cases (logarithmic scale)",
+  "common.seven_day_incidence_logarithmic": "7-day-incidence (logarithmic scale)",
   "common.total_cases": "cases total",
   "common.active_cases": "active cases",
   "common.tests": "tests",
