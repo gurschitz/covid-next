@@ -4,6 +4,7 @@
   "common.charts": "Charts",
   "common.dashboard": "Dashboard",
   "common.cases": "Fälle",
+  "common.cases_logarithmic": "Fälle (logarithmische Skala)",
   "common.total_cases": "Fälle gesamt",
   "common.active_cases": "aktive Fälle",
   "common.tests": "Testungen",

@@ -35,12 +35,12 @@ export const NavLink = ({
 
 export default function Nav() {
   return (
-    <nav className="flex justify-center py-4">
+    <nav className="flex justify-center py-4 ">
       <ul className="flex space-x-3">
         <li>
           <NavLink
-            activeClassName="bg-blue-900 text-white"
-            className="bg-gray-200 px-4 py-2 rounded focus:outline-none focus:shadow-outline"
+            activeClassName="border-white bg-white text-blue-900"
+            className="border text-white border-transparent  px-4 py-2 rounded focus:outline-none focus:shadow-outline"
             href="/"
           >
             <FormattedMessage
@@ -51,8 +51,8 @@ export default function Nav() {
         </li>
         <li>
           <NavLink
-            activeClassName="bg-blue-900 text-white"
-            className="bg-gray-200 px-4 py-2 rounded focus:outline-none focus:shadow-outline"
+            activeClassName="border-white bg-white text-blue-900"
+            className="border border-transparent text-white px-4 py-2 rounded focus:outline-none focus:shadow-outline"
             href="/charts"
           >
             <FormattedMessage id="common.charts" defaultMessage="Charts" />

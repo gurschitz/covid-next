@@ -1,6 +1,6 @@
 export const TOTAL_POP = 8901064;
 
-export const CHART_MARGINS = { top: 0, bottom: 0, left: 0, right: 0 };
+export const CHART_MARGINS = { top: 0, bottom: 0, left: 4, right: 0 };
 
 export const DATE_FORMAT = "eeeeee, P";
 export const DATE_TIME_FORMAT = `eeeeee, P HH:mm`;

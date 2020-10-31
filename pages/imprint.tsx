@@ -1,6 +1,9 @@
+import Head from "next/head";
 import Link from "next/link";
-import { IntlProvider } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
+import Footer from "../components/Footer";
 import Header from "../components/Header";
+import IntlProvider from "../components/IntlProvider";
 import getMessages from "../helpers/getMessages";
 
 type Props = {
@@ -18,12 +21,21 @@ export async function getStaticProps({ locale }): Promise<{ props: Props }> {
   };
 }
 
-export default function Imprint({ locale, messages }: Props) {
-  return (
-    <IntlProvider locale={locale} messages={messages}>
-      <div className="container mx-auto">
-        <Header />
+function Imprint() {
+  const intl = useIntl();
+  const title = `${intl.formatMessage({
+    id: "common.imprint",
+  })} | ${intl.formatMessage({
+    id: "header.title",
+  })}`;
 
+  return (
+    <>
+      <Head>
+        <title>{title}</title>
+      </Head>
+      <Header />
+      <div className="container mx-auto py-4">
         <div className="py-4">
           <Link href="/">
             <a className="text-blue-500">Zurück zum Dashboard</a>
@@ -70,6 +82,14 @@ export default function Imprint({ locale, messages }: Props) {
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+export default function Index({ locale, messages }: Props) {
+  return (
+    <IntlProvider locale={locale} messages={messages}>
+      <Imprint />
     </IntlProvider>
   );
 }

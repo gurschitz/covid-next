@@ -13,10 +13,11 @@ import TimelineWidget from "../components/TimelineWidget";
 import NewCases from "../components/NewCases";
 import { useAtom } from "jotai";
 import IntervalButton, { intervalAtom } from "../components/IntervalButton";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, IntlShape, useIntl } from "react-intl";
 import getMessages from "../helpers/getMessages";
 import { useNumberFormatter } from "../helpers/formatters";
 import IntlProvider from "../components/IntlProvider";
+import Head from "../components/Head";
 
 type DataProps = {
   generalData: GeneralData;
@@ -367,24 +368,39 @@ function Dashboard({ generalData, timeline, versionData }: DataProps) {
   );
 }
 
-export default function Home({
-  generalData,
-  timeline,
-  versionData,
-  locale,
-  messages,
-}: Props) {
+function Home({ generalData, timeline, versionData }: DataProps) {
   return (
-    <IntlProvider locale={locale} messages={messages}>
-      <div className="container mx-auto">
-        <Header lastUpdated={generalData.lastUpdated} />
+    <>
+      <Head>
+        {(intl) => (
+          <title>
+            {intl.formatMessage({
+              id: "common.dashboard",
+            })}{" "}
+            |{" "}
+            {intl.formatMessage({
+              id: "header.title",
+            })}
+          </title>
+        )}
+      </Head>
+      <Header lastUpdated={generalData.lastUpdated} />
+      <div className="container mx-auto py-4">
         <Dashboard
           generalData={generalData}
           timeline={timeline}
           versionData={versionData}
         />
-        <Footer />
       </div>
+      <Footer />
+    </>
+  );
+}
+
+export default function Index({ locale, messages, ...props }: Props) {
+  return (
+    <IntlProvider locale={locale} messages={messages}>
+      <Home {...props} />
     </IntlProvider>
   );
 }
