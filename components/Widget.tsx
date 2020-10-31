@@ -115,13 +115,12 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
       <ResponsiveContainer>
         <BarChart
           data={data}
-          onMouseLeave={() => {
-            if (onHighlightDay) {
-              onHighlightDay(null);
-            }
-          }}
           margin={CHART_MARGINS}
-          onMouseMove={(d) => {
+          onClick={(d) => {
+            if (highlightedDay != null) {
+              onHighlightDay(null);
+              return;
+            }
             if (d) {
               const day = d.activePayload?.[0]?.payload?.day;
               if (day && onHighlightDay) {
@@ -179,13 +178,12 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
     <div className={classNames("h-32 self-end", className)}>
       <ResponsiveContainer>
         <LineChart
-          onMouseLeave={() => {
-            if (onHighlightDay) {
-              onHighlightDay(null);
-            }
-          }}
           margin={LINE_CHART_MARGINS}
-          onMouseMove={(d) => {
+          onClick={(d) => {
+            if (highlightedDay != null) {
+              onHighlightDay(null);
+              return;
+            }
             if (d) {
               const day = d.activePayload?.[0]?.payload?.day;
               if (day && onHighlightDay) {
