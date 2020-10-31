@@ -13,7 +13,7 @@ import TimelineWidget from "../components/TimelineWidget";
 import NewCases from "../components/NewCases";
 import { useAtom } from "jotai";
 import IntervalButton, { intervalAtom } from "../components/IntervalButton";
-import { FormattedMessage, IntlShape, useIntl } from "react-intl";
+import { FormattedMessage } from "react-intl";
 import getMessages from "../helpers/getMessages";
 import { useNumberFormatter } from "../helpers/formatters";
 import IntlProvider from "../components/IntlProvider";
@@ -170,9 +170,9 @@ function TimelineWidgets({
           unit="%"
           dataKey="positivityRate"
           days={interval}
+          precision={2}
         >
           <TimelineWidget.Value
-            precision={2}
             label={
               <FormattedMessage
                 id="common.positivity_rate"
@@ -222,6 +222,7 @@ function TimelineWidgets({
           dataKey="icuOccupancy"
           days={interval}
           unit="%"
+          precision={2}
         >
           <TimelineWidget.Value
             label={
@@ -230,7 +231,6 @@ function TimelineWidgets({
                 defaultMessage="Instensiv Auslastung"
               />
             }
-            precision={2}
           >
             {(timeline.slice().pop()?.icuOccupancy ?? 0) * 100}
           </TimelineWidget.Value>
@@ -264,9 +264,9 @@ function TimelineWidgets({
           dataKey="hospitalOccupancy"
           days={interval}
           unit="%"
+          precision={2}
         >
           <TimelineWidget.Value
-            precision={2}
             label={
               <FormattedMessage
                 id="common.hospitalized_occupancy_rate"

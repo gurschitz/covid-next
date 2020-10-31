@@ -8,11 +8,13 @@ interface TimelineWidgetContext<T> {
   subset: T[];
   dataKey: keyof T & string;
   unit?: string;
+  precision?: number;
 }
 const TimelineWidgetContext = React.createContext<TimelineWidgetContext<any>>({
   data: [],
   subset: [],
   dataKey: "",
+  precision: 0,
 });
 
 function TimelineWidgetContextProvider<T>({
@@ -41,6 +43,7 @@ type TimelineWidgetProps<Row extends DateRow> = {
   className?: string;
   days: number;
   children: React.ReactNode;
+  precision?: number;
 };
 
 export default function TimelineWidget<Row extends DateRow>({
@@ -50,18 +53,23 @@ export default function TimelineWidget<Row extends DateRow>({
   dataKey,
   className,
   unit,
+  precision,
 }: TimelineWidgetProps<Row>) {
   const subset = data.slice().reverse().slice(0, days).reverse();
 
   return (
-    <TimelineWidgetContextProvider value={{ data, subset, dataKey, unit }}>
+    <TimelineWidgetContextProvider
+      value={{ data, subset, dataKey, unit, precision }}
+    >
       <Widget className={className}>{children}</Widget>
     </TimelineWidgetContextProvider>
   );
 }
 
 TimelineWidget.BarChart = ({ color }) => {
-  const { dataKey, subset, unit } = useContext(TimelineWidgetContext);
+  const { dataKey, subset, unit, precision } = useContext(
+    TimelineWidgetContext
+  );
   return (
     <Widget.BarChart
       className="w-full lg:w-1/2 xl:w-3/5"
@@ -69,12 +77,15 @@ TimelineWidget.BarChart = ({ color }) => {
       dataKey={dataKey}
       color={color}
       unit={unit}
+      precision={precision}
     />
   );
 };
 
 TimelineWidget.LineChart = ({ color }) => {
-  const { dataKey, subset, unit } = useContext(TimelineWidgetContext);
+  const { dataKey, subset, unit, precision } = useContext(
+    TimelineWidgetContext
+  );
   return (
     <Widget.LineChart
       className="w-full lg:w-1/2 xl:w-3/5"
@@ -82,6 +93,7 @@ TimelineWidget.LineChart = ({ color }) => {
       dataKey={dataKey}
       color={color}
       unit={unit}
+      precision={precision}
     />
   );
 };
@@ -89,7 +101,6 @@ TimelineWidget.LineChart = ({ color }) => {
 TimelineWidget.Value = ({
   showDelta = false,
   children = 0,
-  precision = undefined,
   calculateDelta = false,
   label,
 }: {
@@ -97,9 +108,10 @@ TimelineWidget.Value = ({
   calculateDelta?: boolean;
   children: number;
   label: React.ReactNode;
-  precision?: number;
 }) => {
-  const { unit, subset, dataKey } = useContext(TimelineWidgetContext);
+  const { unit, subset, dataKey, precision } = useContext(
+    TimelineWidgetContext
+  );
   const lastValueIsToday = isToday(parseISO(subset[subset.length - 1].day));
   const prevValue = lastValueIsToday
     ? subset[subset.length - 2][dataKey]

@@ -60,7 +60,12 @@ Widget.Value = ({
   </div>
 );
 
-function getTooltipContent(dataKey: string, locale: string, unit?: string) {
+function getTooltipContent(
+  dataKey: string,
+  locale: string,
+  unit?: string,
+  precision?: number
+) {
   return ({ payload, active, coordinate }) => {
     if (!active || payload == null || !payload[0] || coordinate?.x < 0)
       return null;
@@ -77,7 +82,7 @@ function getTooltipContent(dataKey: string, locale: string, unit?: string) {
           </p>
 
           <div className="font-bold">
-            <Number>{value}</Number>
+            <Number precision={precision}>{value}</Number>
             {unit}
           </div>
         </div>
@@ -98,6 +103,7 @@ type ChartProps<Row extends DateRow> = {
   color: string;
   unit?: string;
   className?: string;
+  precision?: number;
 };
 
 Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
@@ -106,6 +112,7 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
   color,
   className,
   unit,
+  precision,
 }: ChartProps<Row>) {
   const locale = useLocale();
   const [highlightedDay, onHighlightDay] = useAtom(highlightedDayAtom);
@@ -133,7 +140,9 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
             }
           }}
         >
-          <Tooltip content={getTooltipContent(dataKey, locale, unit)} />
+          <Tooltip
+            content={getTooltipContent(dataKey, locale, unit, precision)}
+          />
           <Bar
             dataKey={dataKey}
             stroke={color}
@@ -172,6 +181,7 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
   color,
   className,
   unit,
+  precision,
 }: ChartProps<Row>) {
   const locale = useLocale();
   const [highlightedDay, onHighlightDay] = useAtom(highlightedDayAtom);
@@ -201,7 +211,9 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
           data={data}
         >
           <YAxis hide />
-          <Tooltip content={getTooltipContent(dataKey, locale, unit)} />
+          <Tooltip
+            content={getTooltipContent(dataKey, locale, unit, precision)}
+          />
           <Line
             dataKey={dataKey}
             stroke={color}
