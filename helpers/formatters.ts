@@ -2,6 +2,7 @@ import { parseISO } from "date-fns";
 import { format } from "date-fns-tz";
 import { de, enUS } from "date-fns/locale";
 import { useIntl } from "react-intl";
+import { useLocale } from "../components/IntlProvider";
 import { TIME_ZONE as timeZone } from "../helpers/constants";
 
 export function useNumberFormatter(precision = 0) {
@@ -12,6 +13,19 @@ export function useNumberFormatter(precision = 0) {
       maximumFractionDigits: precision,
     });
   };
+}
+
+export function useDateFormatter() {
+  const locale = useLocale();
+
+  function formatDate(date: Date, formatString: string) {
+    return format(date, formatString, {
+      locale: locale === "en" ? enUS : de,
+      timeZone,
+    });
+  }
+
+  return formatDate;
 }
 
 export function parseAndFormatDate(

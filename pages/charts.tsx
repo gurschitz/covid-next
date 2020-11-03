@@ -1,4 +1,4 @@
-import dataApi, { GeneralData, TimelineRow } from "../helpers/dataApi";
+import dataApi, { TimelineRow, VersionData } from "../helpers/dataApi";
 import {
   ComposedChart,
   YAxis,
@@ -17,10 +17,13 @@ import Number from "../components/Number";
 import getMessages from "../helpers/getMessages";
 import { FormattedMessage } from "react-intl";
 import IntlProvider, { useLocale } from "../components/IntlProvider";
+import { ChartsIntervalButton } from "../components/IntervalButtons";
+import { useAtom } from "jotai";
+import { chartsIntervalAtom } from "../atoms/interval";
 
 type DataProps = {
-  generalData: GeneralData;
   timeline: TimelineRow[];
+  versionData: VersionData;
 };
 
 type IntlProps = {
@@ -32,11 +35,12 @@ type Props = DataProps & IntlProps;
 
 export async function getStaticProps({ locale }): Promise<{ props: Props }> {
   const timeline = await dataApi.fetchTimeline();
-  const generalData = await dataApi.fetchGeneralData();
+  const versionData = await dataApi.fetchVersionData();
+  // const generalData = await dataApi.fetchGeneralData();
   const messages = await getMessages(locale);
 
   return {
-    props: { timeline, generalData, locale, messages },
+    props: { timeline, versionData, locale, messages },
   };
 }
 
@@ -552,7 +556,13 @@ function DeathsChart({ data }: ChartWithData) {
   );
 }
 
-function Charts({ generalData, timeline }: DataProps) {
+function Charts({ timeline, versionData }: DataProps) {
+  const [currentInterval] = useAtom(chartsIntervalAtom);
+
+  let adjustedTimeline = currentInterval
+    ? timeline.slice(-currentInterval)
+    : timeline;
+
   return (
     <>
       <Head>
@@ -568,14 +578,20 @@ function Charts({ generalData, timeline }: DataProps) {
           </title>
         )}
       </Head>
-      <Header lastUpdated={generalData.lastUpdated} />
+      <Header lastUpdated={versionData.creationDate} />
       <div className="container mx-auto py-4">
+        <div className="flex justify-center lg:justify-end items-center space-x-4 w-full pt-4 pb-3">
+          <ChartsIntervalButton interval={30} />
+          <ChartsIntervalButton interval={60} />
+          <ChartsIntervalButton interval={90} />
+          <ChartsIntervalButton interval={null} />
+        </div>
         <div className="px-3 py-4 lg:px-4 space-y-12">
           <div>
             <ChartHeader>
               <FormattedMessage id="common.cases" defaultMessage="Fälle" />
             </ChartHeader>
-            <CasesChart data={timeline} />
+            <CasesChart data={adjustedTimeline} />
           </div>
 
           <div>
@@ -585,14 +601,14 @@ function Charts({ generalData, timeline }: DataProps) {
                 defaultMessage="7-Tage-Inzidenz (logarithmische Skala)"
               />
             </ChartHeader>
-            <CasesLogChart data={timeline} />
+            <CasesLogChart data={adjustedTimeline} />
           </div>
 
           <div>
             <ChartHeader>
               <FormattedMessage id="common.tests" defaultMessage="Testungen" />
             </ChartHeader>
-            <TestsChart data={timeline} />
+            <TestsChart data={adjustedTimeline} />
           </div>
 
           <div>
@@ -602,14 +618,14 @@ function Charts({ generalData, timeline }: DataProps) {
                 defaultMessage="Spital (ohne Intensiv)"
               />
             </ChartHeader>
-            <HospitalChart data={timeline} />
+            <HospitalChart data={adjustedTimeline} />
           </div>
 
           <div>
             <ChartHeader>
               <FormattedMessage id="common.icu" defaultMessage="Intensiv" />
             </ChartHeader>
-            <ICUChart data={timeline} />
+            <ICUChart data={adjustedTimeline} />
           </div>
 
           <div>
@@ -619,7 +635,7 @@ function Charts({ generalData, timeline }: DataProps) {
                 defaultMessage="Todesfälle"
               />
             </ChartHeader>
-            <DeathsChart data={timeline} />
+            <DeathsChart data={adjustedTimeline} />
           </div>
         </div>
       </div>

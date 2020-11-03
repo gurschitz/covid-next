@@ -16,9 +16,9 @@ import { parseAndFormatDate } from "../helpers/formatters";
 import { COLORS, DATE_FORMAT } from "../helpers/constants";
 import { isSameDay, parseISO } from "date-fns";
 import { getDay } from "date-fns";
-import { intervalAtom } from "./IntervalButton";
 import { useLocale } from "./IntlProvider";
 import Number from "./Number";
+import { widgetIntervalAtom } from "../atoms/interval";
 
 export const CHART_MARGINS = { top: 10, bottom: 0, left: 5, right: 5 };
 export const LINE_CHART_MARGINS = { top: 10, bottom: 0, left: 10, right: 10 };
@@ -185,7 +185,7 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
 }: ChartProps<Row>) {
   const locale = useLocale();
   const [highlightedDay, onHighlightDay] = useAtom(highlightedDayAtom);
-  const [interval] = useAtom(intervalAtom);
+  const [interval] = useAtom(widgetIntervalAtom);
 
   return (
     <div className={classNames("h-32 self-end", className)}>

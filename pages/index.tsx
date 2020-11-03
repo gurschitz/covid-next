@@ -1,9 +1,5 @@
 import React from "react";
-import dataApi, {
-  GeneralData,
-  TimelineRow,
-  VersionData,
-} from "../helpers/dataApi";
+import dataApi, { TimelineRow, VersionData } from "../helpers/dataApi";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { COLORS } from "../helpers/constants";
@@ -12,17 +8,20 @@ import Widget from "../components/Widget";
 import TimelineWidget from "../components/TimelineWidget";
 import NewCases from "../components/NewCases";
 import { useAtom } from "jotai";
-import IntervalButton, { intervalAtom } from "../components/IntervalButton";
+import { WidgetIntervalButton } from "../components/IntervalButtons";
 import { FormattedMessage } from "react-intl";
 import getMessages from "../helpers/getMessages";
-import { useNumberFormatter } from "../helpers/formatters";
+import { useDateFormatter, useNumberFormatter } from "../helpers/formatters";
 import IntlProvider from "../components/IntlProvider";
 import Head from "../components/Head";
+import { HealthMinistryData } from "../helpers/fetchHealthMinistryData";
+import { parseISO } from "date-fns";
+import { widgetIntervalAtom } from "../atoms/interval";
 
 type DataProps = {
-  generalData: GeneralData;
   timeline: TimelineRow[];
   versionData: VersionData;
+  healthMinistryData: HealthMinistryData;
 };
 
 type IntlProps = {
@@ -33,18 +32,18 @@ type IntlProps = {
 type Props = DataProps & IntlProps;
 
 export async function getStaticProps({ locale }): Promise<{ props: Props }> {
-  const generalData = await dataApi.fetchGeneralData();
   const versionData = await dataApi.fetchVersionData();
   const timeline = await dataApi.fetchTimeline();
   const messages = await getMessages(locale);
+  const healthMinistryData = await dataApi.fetchHealthMinistryData();
 
   return {
     props: {
-      generalData,
       timeline,
       versionData,
       locale,
       messages,
+      healthMinistryData,
     },
   };
 }
@@ -95,29 +94,40 @@ function GeneralDataWidgets({ allTests, deaths, recovered, allCases }) {
 }
 
 type TimelineWidgetsProps = {
-  generalData: GeneralData;
   timeline: TimelineRow[];
   versionData: VersionData;
+  healthMinistryData: HealthMinistryData;
   deaths: number;
   recovered: number;
 };
 
 function TimelineWidgets({
-  generalData,
   timeline,
   versionData,
   deaths,
   recovered,
+  healthMinistryData,
 }: TimelineWidgetsProps) {
   const formatNumber = useNumberFormatter();
-  const [interval] = useAtom(intervalAtom);
+  const formatDate = useDateFormatter();
+  const [interval] = useAtom(widgetIntervalAtom);
 
+  const icu = healthMinistryData.icu.total;
+  const icuDateTime = healthMinistryData.icu.timestamp
+    ? parseISO(healthMinistryData.icu.timestamp)
+    : new Date();
+  const hospitalized = healthMinistryData.hospitalized.total - icu;
+  const hospitalizedDateTime = healthMinistryData.hospitalized.timestamp
+    ? parseISO(healthMinistryData.hospitalized.timestamp)
+    : new Date();
+
+  console.log(healthMinistryData);
   return (
     <div className="py-3 px-3 lg:px-4">
       <div className="flex justify-center lg:justify-end items-center space-x-4 w-full pt-4 pb-3">
-        <IntervalButton interval={14} />
-        <IntervalButton interval={30} />
-        <IntervalButton interval={60} />
+        <WidgetIntervalButton interval={14} />
+        <WidgetIntervalButton interval={30} />
+        <WidgetIntervalButton interval={60} />
       </div>
       <div className="grid lg:grid-cols-2 gap-3">
         <TimelineWidget
@@ -154,7 +164,6 @@ function TimelineWidgets({
           <TimelineWidget.LineChart color={COLORS.blue.dark} />
         </TimelineWidget>
         <NewCases
-          allCases={generalData.allCases}
           timeline={timeline}
           versionData={versionData}
           days={interval}
@@ -165,7 +174,6 @@ function TimelineWidgets({
           data={timeline.map((v, i) => ({
             ...v,
             positivityRate: v.positivityRate * 100,
-            className: i === timeline.length - 1 ? "opacity-50" : undefined,
           }))}
           unit="%"
           dataKey="positivityRate"
@@ -247,10 +255,20 @@ function TimelineWidgets({
             calculateDelta
             showDelta
             label={
-              <FormattedMessage id="common.icu" defaultMessage="Instensiv" />
+              <>
+                <FormattedMessage id="common.icu" defaultMessage="Instensiv" />
+                <FormattedMessage
+                  tagName="div"
+                  id="dashboard.cases.new_cases"
+                  defaultMessage="Stand: {x}"
+                  values={{
+                    x: formatDate(icuDateTime, "dd.MM."),
+                  }}
+                />
+              </>
             }
           >
-            {generalData.icu}
+            {icu}
           </TimelineWidget.Value>
           <TimelineWidget.BarChart color={COLORS.red.dark} />
         </TimelineWidget>
@@ -289,13 +307,23 @@ function TimelineWidgets({
             calculateDelta
             showDelta
             label={
-              <FormattedMessage
-                id="common.hospitalized"
-                defaultMessage="Spital (ohne Intensiv)"
-              />
+              <>
+                <FormattedMessage
+                  id="common.hospitalized"
+                  defaultMessage="Spital (ohne Intensiv)"
+                />
+                <FormattedMessage
+                  tagName="div"
+                  id="dashboard.cases.new_cases"
+                  defaultMessage="Stand: {x}"
+                  values={{
+                    x: formatDate(hospitalizedDateTime, "dd.MM."),
+                  }}
+                />
+              </>
             }
           >
-            {generalData.hospitalized}
+            {hospitalized}
           </TimelineWidget.Value>
           <TimelineWidget.BarChart color={COLORS.yellow.dark} />
         </TimelineWidget>
@@ -344,31 +372,33 @@ function TimelineWidgets({
   );
 }
 
-function Dashboard({ generalData, timeline, versionData }: DataProps) {
+function Dashboard({ timeline, versionData, healthMinistryData }: DataProps) {
   const recovered = timeline.reduce((acc, v) => v.recoveredPerDay + acc, 0);
   const deaths = timeline.reduce((acc, v) => v.deathsPerDay + acc, 0);
+  const allCases = timeline.slice().pop()?.casesSum ?? 0;
+  const allTests = timeline.slice().pop()?.tests ?? 0;
 
   return (
     <div>
       <GeneralDataWidgets
         deaths={deaths}
         recovered={recovered}
-        allCases={generalData.allCases}
-        allTests={generalData.allTests}
+        allCases={allCases}
+        allTests={allTests}
       />
 
       <TimelineWidgets
         deaths={deaths}
         recovered={recovered}
-        generalData={generalData}
         timeline={timeline}
         versionData={versionData}
+        healthMinistryData={healthMinistryData}
       />
     </div>
   );
 }
 
-function Home({ generalData, timeline, versionData }: DataProps) {
+function Home({ timeline, versionData, healthMinistryData }: DataProps) {
   return (
     <>
       <Head>
@@ -384,12 +414,12 @@ function Home({ generalData, timeline, versionData }: DataProps) {
           </title>
         )}
       </Head>
-      <Header lastUpdated={generalData.lastUpdated} />
+      <Header lastUpdated={versionData.creationDate} />
       <div className="container mx-auto py-4">
         <Dashboard
-          generalData={generalData}
           timeline={timeline}
           versionData={versionData}
+          healthMinistryData={healthMinistryData}
         />
       </div>
       <Footer />

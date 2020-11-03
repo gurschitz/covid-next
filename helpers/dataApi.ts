@@ -1,5 +1,6 @@
 import { formatISO } from "date-fns";
 import fetchAgesData from "./fetchAgesData";
+import fetchHealthMinistryData from "./fetchHealthMinistryData";
 import { parseDate, parseDateTime } from "./parsers";
 
 const TOTAL_POP = 8901064;
@@ -96,56 +97,23 @@ const fetchCasesTimeline = (): Promise<CasesTimelineRow[]> =>
       }));
   });
 
-export type GeneralData = {
-  allCases: number;
-  lastUpdated: string;
-  deaths: number;
-  hospitalized: number;
-  icu: number;
-  activeCases: number;
-  allTests: number;
-  recovered: number;
-};
-
-const GENERAL_DATA_KEYS = {
-  lastUpdated: "LetzteAktualisierung",
-  positiveTested: "PositivGetestet",
-  deaths: "TotGemeldet",
-  activeCases: "AktuelleErkrankungen",
-  icu: "GesIBBel",
-  hospitalized: "GesNBBel",
-  allTests: "GesTestungen",
-  recovered: "Genesen",
-};
-
-const fetchGeneralData = (): Promise<GeneralData> =>
-  fetchAgesData("AllgemeinDaten").then(([generalData]) => ({
-    allCases: parseInt(generalData[GENERAL_DATA_KEYS.positiveTested]),
-    lastUpdated: formatISO(
-      parseDateTime(generalData[GENERAL_DATA_KEYS.lastUpdated])
-    ),
-    deaths: parseInt(generalData[GENERAL_DATA_KEYS.deaths]),
-    hospitalized: parseInt(generalData[GENERAL_DATA_KEYS.hospitalized]),
-    icu: parseInt(generalData[GENERAL_DATA_KEYS.icu]),
-    activeCases: parseInt(generalData[GENERAL_DATA_KEYS.activeCases]),
-    allTests: parseInt(generalData[GENERAL_DATA_KEYS.allTests]),
-    recovered: parseInt(generalData[GENERAL_DATA_KEYS.recovered]),
-  }));
-
 export type VersionData = {
   version: string;
   versionDate: string;
+  creationDate: string;
 };
 
 const VERSION_KEYS = {
   version: "VersionsNr",
   versionDate: "VersionsDate",
+  creationDate: "CreationDate",
 };
 
 const fetchVersionData = (): Promise<VersionData> =>
   fetchAgesData("Version").then(([row]) => ({
     version: row[VERSION_KEYS.version],
     versionDate: formatISO(parseDateTime(row[VERSION_KEYS.versionDate])),
+    creationDate: formatISO(parseDateTime(row[VERSION_KEYS.creationDate])),
   }));
 
 async function fetchCombinedTimeline(): Promise<
@@ -233,6 +201,6 @@ async function fetchTimeline(): Promise<TimelineRow[]> {
 
 export default {
   fetchTimeline,
-  fetchGeneralData,
+  fetchHealthMinistryData,
   fetchVersionData,
 };
