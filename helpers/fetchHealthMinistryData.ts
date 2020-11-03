@@ -29,7 +29,10 @@ export type HealthMinistryData = {
 export default async function fetchHealthMinistryData(): Promise<
   HealthMinistryData
 > {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+
   const page = await browser.newPage();
   await page.goto(
     "https://www.sozialministerium.at/Informationen-zum-Coronavirus/Neuartiges-Coronavirus-(2019-nCov).html"
