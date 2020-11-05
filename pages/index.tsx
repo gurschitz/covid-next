@@ -307,7 +307,7 @@ function TimelineWidgets({
                 <FormattedMessage id="common.icu" defaultMessage="Instensiv" />
                 <FormattedMessage
                   tagName="div"
-                  id="dashboard.cases.new_cases"
+                  id="dashboard.cases.date"
                   defaultMessage="Stand: {x}"
                   values={{
                     x: formatDate(icuDateTime, "dd.MM."),
@@ -362,7 +362,7 @@ function TimelineWidgets({
                 />
                 <FormattedMessage
                   tagName="div"
-                  id="dashboard.cases.new_cases"
+                  id="dashboard.cases.date"
                   defaultMessage="Stand: {x}"
                   values={{
                     x: formatDate(hospitalizedDateTime, "dd.MM."),

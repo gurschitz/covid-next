@@ -28,5 +28,6 @@
   "footer.source": "data from <a>AGES Dashboard</a>",
   "dashboard.cases.new_cases_since": "new cases since {x}",
   "dashboard.cases.last_ages_update": "last AGES-Update",
-  "dashboard.cases.new_cases": "Date: {x}"
+  "dashboard.cases.date": "Date: {x}",
+  "dashboard.cases.new_cases": "New cases on {x}"
 }
