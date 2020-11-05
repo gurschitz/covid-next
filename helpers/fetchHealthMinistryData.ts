@@ -58,7 +58,7 @@ export default async function fetchHealthMinistryData(): Promise<
       }
       return new Date(
         parseInt(match[3]),
-        parseInt(match[2]),
+        parseInt(match[2]) - 1,
         parseInt(match[1]),
         parseInt(match[4]),
         parseInt(match[5])

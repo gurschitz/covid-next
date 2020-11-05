@@ -24,7 +24,9 @@
   "common.per_x_inhabitants": "per {x} inhabitants",
   "common.x_days": "{x} days",
   "common.imprint": "Imprint",
+  "common.new_cases_timeframe": "New cases from {from} to {to}",
   "footer.source": "data from <a>AGES Dashboard</a>",
   "dashboard.cases.new_cases_since": "new cases since {x}",
-  "dashboard.cases.last_ages_update": "last AGES-Update"
+  "dashboard.cases.last_ages_update": "last AGES-Update",
+  "dashboard.cases.new_cases": "Date: {x}"
 }

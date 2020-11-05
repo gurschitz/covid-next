@@ -1,9 +1,46 @@
 import { formatISO } from "date-fns";
 import fetchAgesData from "./fetchAgesData";
 import fetchHealthMinistryData from "./fetchHealthMinistryData";
+import fetchLegacyData from "./fetchLegacyData";
 import { parseDate, parseDateTime } from "./parsers";
 
 const TOTAL_POP = 8901064;
+
+export type GeneralData = {
+  allCases: number;
+  lastUpdated: string;
+  deaths: number;
+  hospitalized: number;
+  icu: number;
+  activeCases: number;
+  allTests: number;
+  recovered: number;
+};
+
+const GENERAL_DATA_KEYS = {
+  lastUpdated: "LetzteAktualisierung",
+  positiveTested: "PositivGetestet",
+  deaths: "TotGemeldet",
+  activeCases: "AktuelleErkrankungen",
+  icu: "GesIBBel",
+  hospitalized: "GesNBBel",
+  allTests: "GesTestungen",
+  recovered: "Genesen",
+};
+
+const fetchGeneralData = (): Promise<GeneralData> =>
+  fetchLegacyData("AllgemeinDaten").then(([generalData]) => ({
+    allCases: parseInt(generalData[GENERAL_DATA_KEYS.positiveTested]),
+    lastUpdated: formatISO(
+      parseDateTime(generalData[GENERAL_DATA_KEYS.lastUpdated])
+    ),
+    deaths: parseInt(generalData[GENERAL_DATA_KEYS.deaths]),
+    hospitalized: parseInt(generalData[GENERAL_DATA_KEYS.hospitalized]),
+    icu: parseInt(generalData[GENERAL_DATA_KEYS.icu]),
+    activeCases: parseInt(generalData[GENERAL_DATA_KEYS.activeCases]),
+    allTests: parseInt(generalData[GENERAL_DATA_KEYS.allTests]),
+    recovered: parseInt(generalData[GENERAL_DATA_KEYS.recovered]),
+  }));
 
 const HOSPITAL_AND_TEST_TIMELINE_KEYS = {
   countryId: "BundeslandID",
@@ -203,4 +240,5 @@ export default {
   fetchTimeline,
   fetchHealthMinistryData,
   fetchVersionData,
+  fetchGeneralData,
 };

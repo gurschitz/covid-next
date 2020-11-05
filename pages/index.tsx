@@ -1,5 +1,9 @@
 import React from "react";
-import dataApi, { TimelineRow, VersionData } from "../helpers/dataApi";
+import dataApi, {
+  GeneralData,
+  TimelineRow,
+  VersionData,
+} from "../helpers/dataApi";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { COLORS } from "../helpers/constants";
@@ -15,13 +19,15 @@ import { useDateFormatter, useNumberFormatter } from "../helpers/formatters";
 import IntlProvider from "../components/IntlProvider";
 import Head from "../components/Head";
 import { HealthMinistryData } from "../helpers/fetchHealthMinistryData";
-import { parseISO } from "date-fns";
+import { isSameDay, parseISO } from "date-fns";
 import { widgetIntervalAtom } from "../atoms/interval";
+import { formatDateToParts } from "@formatjs/intl";
 
 type DataProps = {
   timeline: TimelineRow[];
   versionData: VersionData;
   healthMinistryData: HealthMinistryData;
+  generalData: GeneralData;
 };
 
 type IntlProps = {
@@ -36,6 +42,7 @@ export async function getStaticProps({ locale }): Promise<{ props: Props }> {
   const timeline = await dataApi.fetchTimeline();
   const messages = await getMessages(locale);
   const healthMinistryData = await dataApi.fetchHealthMinistryData();
+  const generalData = await dataApi.fetchGeneralData();
 
   return {
     props: {
@@ -44,15 +51,56 @@ export async function getStaticProps({ locale }): Promise<{ props: Props }> {
       locale,
       messages,
       healthMinistryData,
+      generalData,
     },
   };
 }
 
-function GeneralDataWidgets({ allTests, deaths, recovered, allCases }) {
+type GeneralDataWidgetsProps = {
+  allTests: number;
+  deaths: number;
+  recovered: number;
+  healthMinistryData: HealthMinistryData;
+  generalData: GeneralData;
+  versionData: VersionData;
+};
+function GeneralDataWidgets({
+  allTests,
+  generalData,
+  deaths,
+  recovered,
+  healthMinistryData,
+  versionData,
+}: GeneralDataWidgetsProps) {
+  const formatDate = useDateFormatter();
+  const allCasesNew = generalData.allCases;
+  const allCases = healthMinistryData.confirmedCases.total;
+  const from = parseISO(
+    healthMinistryData.confirmedCases.timestamp ?? versionData.versionDate
+  );
+  const to = parseISO(generalData.lastUpdated);
   const activeCases = allCases - recovered - deaths;
 
+  const showDay = !isSameDay(to, from);
+  const dateFormat = showDay ? "dd.MM. HH:mm" : "HH:mm";
   return (
-    <div className="grid lg:grid-cols-3 gap-3 px-3 lg:px-4">
+    <div className="grid lg:grid-cols-4 gap-3 px-3 lg:px-4">
+      <Widget className="bg-gray-200 text-gray-900">
+        <Widget.Value
+          label={
+            <FormattedMessage
+              id="common.new_cases_timeframe"
+              defaultMessage="Neue Fälle im Zeitraum {from}–{to}"
+              values={{
+                to: formatDate(to, dateFormat),
+                from: formatDate(from, dateFormat),
+              }}
+            />
+          }
+        >
+          <Number>{allCasesNew - allCases}</Number>
+        </Widget.Value>
+      </Widget>
       <Widget className="bg-gray-200 text-gray-900">
         <Widget.Value
           label={
@@ -171,7 +219,7 @@ function TimelineWidgets({
 
         <TimelineWidget
           className="bg-blue-100 text-blue-900"
-          data={timeline.map((v, i) => ({
+          data={timeline.map((v) => ({
             ...v,
             positivityRate: v.positivityRate * 100,
           }))}
@@ -188,7 +236,7 @@ function TimelineWidgets({
               />
             }
           >
-            {(timeline.slice(-2, -1).pop()?.positivityRate ?? 0) * 100}
+            {(timeline.slice().pop()?.positivityRate ?? 0) * 100}
           </TimelineWidget.Value>
           <TimelineWidget.LineChart color={COLORS.blue.dark} />
         </TimelineWidget>
@@ -372,10 +420,14 @@ function TimelineWidgets({
   );
 }
 
-function Dashboard({ timeline, versionData, healthMinistryData }: DataProps) {
+function Dashboard({
+  timeline,
+  versionData,
+  healthMinistryData,
+  generalData,
+}: DataProps) {
   const recovered = timeline.reduce((acc, v) => v.recoveredPerDay + acc, 0);
   const deaths = timeline.reduce((acc, v) => v.deathsPerDay + acc, 0);
-  const allCases = timeline.slice().pop()?.casesSum ?? 0;
   const allTests = timeline.slice().pop()?.tests ?? 0;
 
   return (
@@ -383,8 +435,10 @@ function Dashboard({ timeline, versionData, healthMinistryData }: DataProps) {
       <GeneralDataWidgets
         deaths={deaths}
         recovered={recovered}
-        allCases={allCases}
         allTests={allTests}
+        generalData={generalData}
+        versionData={versionData}
+        healthMinistryData={healthMinistryData}
       />
 
       <TimelineWidgets
@@ -398,7 +452,12 @@ function Dashboard({ timeline, versionData, healthMinistryData }: DataProps) {
   );
 }
 
-function Home({ timeline, versionData, healthMinistryData }: DataProps) {
+function Home({
+  timeline,
+  versionData,
+  healthMinistryData,
+  generalData,
+}: DataProps) {
   return (
     <>
       <Head>
@@ -417,6 +476,7 @@ function Home({ timeline, versionData, healthMinistryData }: DataProps) {
       <Header lastUpdated={versionData.creationDate} />
       <div className="container mx-auto py-4">
         <Dashboard
+          generalData={generalData}
           timeline={timeline}
           versionData={versionData}
           healthMinistryData={healthMinistryData}
