@@ -56,12 +56,19 @@ export default async function fetchHealthMinistryData(): Promise<
       if (match == null) {
         return null;
       }
+
+      const offset = 1;
+
       return new Date(
-        parseInt(match[3]),
-        parseInt(match[2]) - 1,
-        parseInt(match[1]),
-        parseInt(match[4]),
-        parseInt(match[5])
+        Date.UTC(
+          parseInt(match[3]),
+          parseInt(match[2]) - 1,
+          parseInt(match[1]),
+          parseInt(match[4]) - offset,
+          parseInt(match[5]),
+          0,
+          0
+        )
       ).toISOString();
     }
 
