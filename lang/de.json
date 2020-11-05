@@ -24,7 +24,7 @@
   "common.per_x_inhabitants": "per {x} Einwohner",
   "common.x_days": "{x} Tage",
   "common.imprint": "Impressum",
-  "common.new_cases_timeframe": "Neue Fälle im Zeitraum {from}–{to}",
+  "common.new_cases_timeframe": "Neue Fälle von {from} bis {to}",
   "footer.source": "Daten von <a>AGES Dashboard</a>",
   "dashboard.cases.new_cases_since": "Neue Fälle seit {x}",
   "dashboard.cases.last_ages_update": "Letztes AGES-Update",
