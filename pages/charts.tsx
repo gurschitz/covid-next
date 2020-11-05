@@ -580,7 +580,7 @@ function Charts({ timeline, versionData }: DataProps) {
       </Head>
       <Header lastUpdated={versionData.creationDate} />
       <div className="container mx-auto py-4">
-        <div className="flex justify-center lg:justify-end items-center space-x-4 w-full pt-4 pb-3">
+        <div className="flex justify-center lg:justify-end flex-wrap gap-4 items-center w-full pt-4 pb-3">
           <ChartsIntervalButton interval={30} />
           <ChartsIntervalButton interval={60} />
           <ChartsIntervalButton interval={90} />
