@@ -51,7 +51,7 @@ export default async function fetchHealthMinistryData(): Promise<
     };
 
     function convertToDate(dateString: string) {
-      const regex = /\(Stand (\d\d)\.(\d\d)\.(\d\d\d\d)\, (\d\d)\:(\d\d) Uhr\)/;
+      const regex = /\(Stand (\d\d)\.(\d\d)\.(\d\d\d\d)\, (\d\d)[\:\.](\d\d) Uhr\)/;
       const match = dateString.match(regex);
       if (match == null) {
         return null;

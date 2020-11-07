@@ -63,7 +63,7 @@ function CasesLogChart({ data }: ChartWithData) {
   return (
     <div className="h-48 lg:h-96">
       <ResponsiveContainer height="100%" width="100%">
-        <ComposedChart data={data.slice(0, -1)} margin={CHART_MARGINS}>
+        <ComposedChart data={data} margin={CHART_MARGINS}>
           <CartesianGrid strokeDasharray="3 3" />
           <YAxis
             yAxisId="left"
@@ -84,17 +84,6 @@ function CasesLogChart({ data }: ChartWithData) {
                       {parseAndFormatDate(day, DATE_FORMAT, locale)}
                     </p>
                     <div className="space-y-2">
-                      <div>
-                        <div className="text-xs">
-                          <FormattedMessage
-                            id="common.cases"
-                            defaultMessage="Fälle"
-                          />
-                        </div>
-                        <div className="font-bold">
-                          <Number>{cases}</Number>
-                        </div>
-                      </div>
                       <div className="flex flex-col">
                         <div className="text-xs">
                           <FormattedMessage
@@ -105,12 +94,16 @@ function CasesLogChart({ data }: ChartWithData) {
                         <div className="font-bold">
                           {sevenDayCalculated?.toFixed(2) ?? 0}
                         </div>
+                      </div>
+                      <div>
                         <div className="text-xs">
                           <FormattedMessage
-                            id="common.per_x_inhabitants"
-                            defaultMessage="per {x} Einwohner"
-                            values={{ x: formatNumber(100000) }}
+                            id="common.cases"
+                            defaultMessage="Fälle"
                           />
+                        </div>
+                        <div className="font-bold">
+                          <Number>{cases}</Number>
                         </div>
                       </div>
                     </div>
@@ -142,7 +135,7 @@ function CasesChart({ data }: ChartWithData) {
 
   return (
     <ResponsiveContainer height={CHART_HEIGHT} width="100%">
-      <ComposedChart data={data.slice(0, -1)} margin={CHART_MARGINS}>
+      <ComposedChart data={data} margin={CHART_MARGINS}>
         <CartesianGrid strokeDasharray="3 3" />
         <YAxis yAxisId="left" orientation="left" />
         <YAxis yAxisId="right" orientation="right" hide />
@@ -158,17 +151,6 @@ function CasesChart({ data }: ChartWithData) {
                     {parseAndFormatDate(day, DATE_FORMAT, locale)}
                   </p>
                   <div className="space-y-2">
-                    <div>
-                      <div className="text-xs">
-                        <FormattedMessage
-                          id="common.cases"
-                          defaultMessage="Fälle"
-                        />
-                      </div>
-                      <div className="font-bold">
-                        <Number>{cases}</Number>
-                      </div>
-                    </div>
                     <div className="flex flex-col">
                       <div className="text-xs">
                         <FormattedMessage
@@ -179,12 +161,16 @@ function CasesChart({ data }: ChartWithData) {
                       <div className="font-bold">
                         {sevenDayCalculated?.toFixed(2) ?? 0}
                       </div>
+                    </div>
+                    <div>
                       <div className="text-xs">
                         <FormattedMessage
-                          id="common.per_x_inhabitants"
-                          defaultMessage="per {x} Einwohner"
-                          values={{ x: formatNumber(100000) }}
+                          id="common.cases"
+                          defaultMessage="Fälle"
                         />
+                      </div>
+                      <div className="font-bold">
+                        <Number>{cases}</Number>
                       </div>
                     </div>
                   </div>
@@ -219,7 +205,7 @@ function TestsChart({ data }: ChartWithData) {
 
   return (
     <ResponsiveContainer height={CHART_HEIGHT} width="100%">
-      <ComposedChart data={data.slice(0, -1)} margin={CHART_MARGINS}>
+      <ComposedChart data={data} margin={CHART_MARGINS}>
         <CartesianGrid strokeDasharray="3 3" />
         <YAxis yAxisId="left" orientation="left" />
         <YAxis yAxisId="right" orientation="right" hide />
@@ -230,6 +216,7 @@ function TestsChart({ data }: ChartWithData) {
             const {
               positivityRate,
               sevenDayAvgTests,
+              sevenDayAvgCases,
               day,
             } = payload[0].payload;
             return (
@@ -242,8 +229,21 @@ function TestsChart({ data }: ChartWithData) {
                     <div>
                       <div className="text-xs">
                         <FormattedMessage
-                          id="common.seven_day_average"
-                          defaultMessage="7-Tage-Mittel"
+                          id="common.positivity_rate"
+                          defaultMessage="Positivitätsrate"
+                        />
+                      </div>
+                      <div className="font-bold">
+                        <Number precision={2} unit="%">
+                          {positivityRate * 100}
+                        </Number>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.seven_day_average_tests"
+                          defaultMessage="7-Tage-Mittel Tests"
                         />
                       </div>
                       <div className="font-bold">
@@ -253,14 +253,12 @@ function TestsChart({ data }: ChartWithData) {
                     <div>
                       <div className="text-xs">
                         <FormattedMessage
-                          id="common.positivity_rate"
-                          defaultMessage="Positivitätsrate"
+                          id="common.seven_day_average_cases"
+                          defaultMessage="7-Tage-Mittel Fälle"
                         />
                       </div>
                       <div className="font-bold">
-                        <Number precision={2} unit="%">
-                          {positivityRate * 100}
-                        </Number>
+                        <Number precision={0}>{sevenDayAvgCases}</Number>
                       </div>
                     </div>
                   </div>
@@ -328,6 +326,19 @@ function HospitalChart({ data }: ChartWithData) {
                     <div>
                       <div className="text-xs">
                         <FormattedMessage
+                          id="common.occupancy_rate"
+                          defaultMessage="Auslastung"
+                        />
+                      </div>
+                      <div className="font-bold">
+                        <Number precision={2} unit="%">
+                          {hospitalOccupancy * 100}
+                        </Number>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs">
+                        <FormattedMessage
                           id="common.occupied"
                           defaultMessage="Belegt"
                         />
@@ -345,19 +356,6 @@ function HospitalChart({ data }: ChartWithData) {
                       </div>
                       <div className="font-bold">
                         <Number>{hospitalFree}</Number>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs">
-                        <FormattedMessage
-                          id="common.occupancy_rate"
-                          defaultMessage="Auslastung"
-                        />
-                      </div>
-                      <div className="font-bold">
-                        <Number precision={2} unit="%">
-                          {hospitalOccupancy * 100}
-                        </Number>
                       </div>
                     </div>
                   </div>
@@ -419,6 +417,19 @@ function ICUChart({ data }: ChartWithData) {
                     <div>
                       <div className="text-xs">
                         <FormattedMessage
+                          id="common.occupancyRate"
+                          defaultMessage="Auslastung"
+                        />
+                      </div>
+                      <div className="font-bold">
+                        <Number unit="%" precision={2}>
+                          {icuOccupancy * 100}
+                        </Number>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs">
+                        <FormattedMessage
                           id="common.occupied"
                           defaultMessage="Belegt"
                         />
@@ -436,19 +447,6 @@ function ICUChart({ data }: ChartWithData) {
                       </div>
                       <div className="font-bold">
                         <Number>{icuFree}</Number>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs">
-                        <FormattedMessage
-                          id="common.occupancyRate"
-                          defaultMessage="Auslastung"
-                        />
-                      </div>
-                      <div className="font-bold">
-                        <Number unit="%" precision={2}>
-                          {icuOccupancy * 100}
-                        </Number>
                       </div>
                     </div>
                   </div>
@@ -510,23 +508,23 @@ function DeathsChart({ data }: ChartWithData) {
                     <div>
                       <div className="text-xs">
                         <FormattedMessage
-                          id="common.tests"
-                          defaultMessage="Testungen"
-                        />
-                      </div>
-                      <div className="font-bold">
-                        <Number>{deathsPerDay}</Number>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs">
-                        <FormattedMessage
                           id="common.seven_day_incidence"
                           defaultMessage="7-Tage-Inzidenz"
                         />
                       </div>
                       <div className="font-bold">
                         <Number precision={2}>{sevenDayDeaths}</Number>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs">
+                        <FormattedMessage
+                          id="common.deaths"
+                          defaultMessage="Todesfälle"
+                        />
+                      </div>
+                      <div className="font-bold">
+                        <Number>{deathsPerDay}</Number>
                       </div>
                     </div>
                   </div>

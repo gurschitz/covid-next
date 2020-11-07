@@ -63,6 +63,7 @@ type GeneralDataWidgetsProps = {
   healthMinistryData: HealthMinistryData;
   generalData: GeneralData;
   versionData: VersionData;
+  timeline: TimelineRow[];
 };
 function GeneralDataWidgets({
   allTests,
@@ -71,18 +72,15 @@ function GeneralDataWidgets({
   recovered,
   healthMinistryData,
   versionData,
+  timeline,
 }: GeneralDataWidgetsProps) {
   const formatDate = useDateFormatter();
   const allCasesNew = generalData.allCases;
-  const allCases = healthMinistryData.confirmedCases.total;
-  const from = parseISO(
-    healthMinistryData.confirmedCases.timestamp ?? versionData.versionDate
-  );
+  const lastEntry = timeline.slice().pop();
+  const allCases = lastEntry?.casesSum ?? 0;
   const to = parseISO(generalData.lastUpdated);
   const activeCases = allCases - recovered - deaths;
 
-  const showDay = !isSameDay(to, from);
-  const dateFormat = showDay ? "dd.MM. HH:mm" : "HH:mm";
   return (
     <div className="grid lg:grid-cols-4 gap-3 px-3 lg:px-4">
       <Widget className="bg-gray-200 text-gray-900">
@@ -90,10 +88,9 @@ function GeneralDataWidgets({
           label={
             <FormattedMessage
               id="common.new_cases_timeframe"
-              defaultMessage="Neue Fälle im Zeitraum {from}–{to}"
+              defaultMessage="Neue Fälle im Zeitraum 00:00–{to}"
               values={{
-                to: formatDate(to, dateFormat),
-                from: formatDate(from, dateFormat),
+                to: formatDate(to, "HH:mm"),
               }}
             />
           }
@@ -439,6 +436,7 @@ function Dashboard({
         generalData={generalData}
         versionData={versionData}
         healthMinistryData={healthMinistryData}
+        timeline={timeline}
       />
 
       <TimelineWidgets
