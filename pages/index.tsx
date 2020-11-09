@@ -78,8 +78,11 @@ function GeneralDataWidgets({
   const allCasesNew = generalData.allCases;
   const lastEntry = timeline.slice().pop();
   const allCases = lastEntry?.casesSum ?? 0;
+  const from = parseISO(versionData.creationDate);
   const to = parseISO(generalData.lastUpdated);
   const activeCases = allCases - recovered - deaths;
+  const showDay = !isSameDay(to, from);
+  const dateFormat = showDay ? "dd.MM. HH:mm" : "HH:mm";
 
   return (
     <div className="grid lg:grid-cols-4 gap-3 px-3 lg:px-4">
@@ -88,9 +91,10 @@ function GeneralDataWidgets({
           label={
             <FormattedMessage
               id="common.new_cases_timeframe"
-              defaultMessage="Neue Fälle im Zeitraum 00:00–{to}"
+              defaultMessage="Neue Fälle seit {from}"
               values={{
-                to: formatDate(to, "HH:mm"),
+                from: formatDate(from, dateFormat),
+                to: formatDate(to, dateFormat),
               }}
             />
           }
@@ -166,7 +170,6 @@ function TimelineWidgets({
     ? parseISO(healthMinistryData.hospitalized.timestamp)
     : new Date();
 
-  console.log(healthMinistryData);
   return (
     <div className="py-3 px-3 lg:px-4">
       <div className="flex justify-center lg:justify-end items-center space-x-4 w-full pt-4 pb-3">
