@@ -2,11 +2,14 @@ import { formatISO } from "date-fns";
 import fetchAgesData from "./fetchAgesData";
 import fetchHealthMinistryData from "./fetchHealthMinistryData";
 import fetchLegacyData from "./fetchLegacyData";
+import client from "./mongoClient";
 import { parseDate, parseDateTime } from "./parsers";
+import { sub } from "date-fns";
+import { ObjectId } from "mongodb";
 
 const TOTAL_POP = 8901064;
 
-export type GeneralData = {
+type GeneralBaseData = {
   allCases: number;
   lastUpdated: string;
   deaths: number;
@@ -15,6 +18,10 @@ export type GeneralData = {
   activeCases: number;
   allTests: number;
   recovered: number;
+};
+
+export type GeneralData = GeneralBaseData & {
+  timeline: GeneralBaseData[];
 };
 
 const GENERAL_DATA_KEYS = {
@@ -28,19 +35,55 @@ const GENERAL_DATA_KEYS = {
   recovered: "Genesen",
 };
 
-const fetchGeneralData = (): Promise<GeneralData> =>
-  fetchLegacyData("AllgemeinDaten").then(([generalData]) => ({
-    allCases: parseInt(generalData[GENERAL_DATA_KEYS.positiveTested]),
-    lastUpdated: formatISO(
-      parseDateTime(generalData[GENERAL_DATA_KEYS.lastUpdated])
-    ),
-    deaths: parseInt(generalData[GENERAL_DATA_KEYS.deaths]),
-    hospitalized: parseInt(generalData[GENERAL_DATA_KEYS.hospitalized]),
-    icu: parseInt(generalData[GENERAL_DATA_KEYS.icu]),
-    activeCases: parseInt(generalData[GENERAL_DATA_KEYS.activeCases]),
-    allTests: parseInt(generalData[GENERAL_DATA_KEYS.allTests]),
-    recovered: parseInt(generalData[GENERAL_DATA_KEYS.recovered]),
-  }));
+const fetchGeneralData = async (): Promise<GeneralData> => {
+  const generalData = await fetchLegacyData("AllgemeinDaten").then(
+    ([generalData]) => ({
+      allCases: parseInt(generalData[GENERAL_DATA_KEYS.positiveTested]),
+      lastUpdated: parseDateTime(generalData[GENERAL_DATA_KEYS.lastUpdated]),
+      deaths: parseInt(generalData[GENERAL_DATA_KEYS.deaths]),
+      hospitalized: parseInt(generalData[GENERAL_DATA_KEYS.hospitalized]),
+      icu: parseInt(generalData[GENERAL_DATA_KEYS.icu]),
+      activeCases: parseInt(generalData[GENERAL_DATA_KEYS.activeCases]),
+      allTests: parseInt(generalData[GENERAL_DATA_KEYS.allTests]),
+      recovered: parseInt(generalData[GENERAL_DATA_KEYS.recovered]),
+    })
+  );
+
+  await client.connect();
+  const database = client.db("covid");
+  const collection = database.collection("generalData");
+
+  const query = { lastUpdated: generalData.lastUpdated };
+
+  const entry = await collection.findOne(query);
+
+  if (entry == null) {
+    await collection.insertOne(generalData);
+  }
+
+  const last24hoursQuery = {
+    lastUpdated: { $gt: sub(new Date(), { hours: 24 }) },
+  };
+  const options = {
+    // sort returned documents in ascending order by title (A->Z)
+    sort: { lastUpdated: 1 },
+  };
+  const last24hours = await collection
+    .find<GeneralData & { _id: ObjectId; lastUpdated: Date }>(
+      last24hoursQuery,
+      options
+    )
+    .toArray();
+
+  return {
+    ...generalData,
+    lastUpdated: formatISO(generalData.lastUpdated),
+    timeline: last24hours.map(({ _id, lastUpdated, ...rest }) => ({
+      lastUpdated: formatISO(lastUpdated),
+      ...rest,
+    })),
+  };
+};
 
 const HOSPITAL_AND_TEST_TIMELINE_KEYS = {
   countryId: "BundeslandID",

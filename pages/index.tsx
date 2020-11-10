@@ -432,6 +432,7 @@ function Dashboard({
 
   return (
     <div>
+      {/* {JSON.stringify(generalData.timeline)} */}
       <GeneralDataWidgets
         deaths={deaths}
         recovered={recovered}
