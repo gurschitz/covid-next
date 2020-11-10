@@ -60,7 +60,6 @@ type GeneralDataWidgetsProps = {
   allTests: number;
   deaths: number;
   recovered: number;
-  healthMinistryData: HealthMinistryData;
   generalData: GeneralData;
   versionData: VersionData;
   timeline: TimelineRow[];
@@ -70,7 +69,6 @@ function GeneralDataWidgets({
   generalData,
   deaths,
   recovered,
-  healthMinistryData,
   versionData,
   timeline,
 }: GeneralDataWidgetsProps) {
@@ -84,22 +82,41 @@ function GeneralDataWidgets({
   const showDay = !isSameDay(to, from);
   const dateFormat = showDay ? "dd.MM. HH:mm" : "HH:mm";
 
+  const newInfectionsTimeline = generalData.timeline.map(
+    ({ allCases, lastUpdated }, i) => {
+      const previousCases = generalData.timeline[i - 1]?.allCases;
+
+      return {
+        allCases,
+        diff: previousCases ? allCases - previousCases : 0,
+        day: parseISO(lastUpdated),
+      };
+    }
+  );
+
+  const newInfections = newInfectionsTimeline.reduce((acc, v) => {
+    return acc + v.diff;
+  }, 0);
+
+  const firstInfection = newInfectionsTimeline[0];
+
   return (
     <div className="grid lg:grid-cols-4 gap-3 px-3 lg:px-4">
       <Widget className="bg-gray-200 text-gray-900">
         <Widget.Value
           label={
-            <FormattedMessage
-              id="common.new_cases_timeframe"
-              defaultMessage="Neue Fälle seit {from}"
-              values={{
-                from: formatDate(from, dateFormat),
-                to: formatDate(to, dateFormat),
-              }}
-            />
+            firstInfection && (
+              <FormattedMessage
+                id="common.new_cases_timeframe"
+                defaultMessage="Neue Fälle seit {from}"
+                values={{
+                  from: formatDate(firstInfection.day, dateFormat),
+                }}
+              />
+            )
           }
         >
-          <Number>{allCasesNew - allCases}</Number>
+          <Number>{newInfections}</Number>
         </Widget.Value>
       </Widget>
       <Widget className="bg-gray-200 text-gray-900">
@@ -177,6 +194,7 @@ function TimelineWidgets({
         <WidgetIntervalButton interval={30} />
         <WidgetIntervalButton interval={60} />
       </div>
+
       <div className="grid lg:grid-cols-2 gap-3">
         <TimelineWidget
           className="bg-blue-100 text-blue-900"
@@ -432,14 +450,12 @@ function Dashboard({
 
   return (
     <div>
-      {/* {JSON.stringify(generalData.timeline)} */}
       <GeneralDataWidgets
         deaths={deaths}
         recovered={recovered}
         allTests={allTests}
         generalData={generalData}
         versionData={versionData}
-        healthMinistryData={healthMinistryData}
         timeline={timeline}
       />
 
