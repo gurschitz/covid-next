@@ -6,6 +6,7 @@ import client from "./mongoClient";
 import { parseDate, parseDateTime } from "./parsers";
 import { sub } from "date-fns";
 import { ObjectId } from "mongodb";
+import * as R from "ramda";
 
 const TOTAL_POP = 8901064;
 
@@ -84,10 +85,13 @@ const fetchGeneralData = async (): Promise<GeneralData> => {
   return {
     ...generalData,
     lastUpdated: formatISO(generalData.lastUpdated),
-    timeline: last24hours.map(({ _id, lastUpdated, ...rest }) => ({
-      lastUpdated: formatISO(lastUpdated),
-      ...rest,
-    })),
+    timeline: R.uniqBy(
+      R.prop("lastUpdated"),
+      last24hours.map(({ _id, lastUpdated, ...rest }) => ({
+        lastUpdated: formatISO(lastUpdated),
+        ...rest,
+      }))
+    ),
   };
 };
 

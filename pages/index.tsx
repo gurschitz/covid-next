@@ -19,7 +19,7 @@ import { useDateFormatter, useNumberFormatter } from "../helpers/formatters";
 import IntlProvider from "../components/IntlProvider";
 import Head from "../components/Head";
 import { HealthMinistryData } from "../helpers/fetchHealthMinistryData";
-import { isSameDay, parseISO } from "date-fns";
+import { isSameDay, isToday, parseISO } from "date-fns";
 import { widgetIntervalAtom } from "../atoms/interval";
 import { formatDateToParts } from "@formatjs/intl";
 
@@ -69,18 +69,12 @@ function GeneralDataWidgets({
   generalData,
   deaths,
   recovered,
-  versionData,
   timeline,
 }: GeneralDataWidgetsProps) {
   const formatDate = useDateFormatter();
-  const allCasesNew = generalData.allCases;
   const lastEntry = timeline.slice().pop();
   const allCases = lastEntry?.casesSum ?? 0;
-  const from = parseISO(versionData.creationDate);
-  const to = parseISO(generalData.lastUpdated);
   const activeCases = allCases - recovered - deaths;
-  const showDay = !isSameDay(to, from);
-  const dateFormat = showDay ? "dd.MM. HH:mm" : "HH:mm";
 
   const newInfectionsTimeline = generalData.timeline.map(
     ({ allCases, lastUpdated }, i) => {
@@ -110,7 +104,10 @@ function GeneralDataWidgets({
                 id="common.new_cases_timeframe"
                 defaultMessage="Neue Fälle seit {from}"
                 values={{
-                  from: formatDate(firstInfection.day, dateFormat),
+                  from: formatDate(
+                    firstInfection.day,
+                    isToday(firstInfection.day) ? "HH:mm" : "dd.MM. HH:mm"
+                  ),
                 }}
               />
             )
