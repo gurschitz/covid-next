@@ -58,16 +58,22 @@ const fetchGeneralData = async (): Promise<GeneralData> => {
   const entry = await collection.findOne(query);
 
   if (entry == null) {
-    await collection.insertOne(generalData);
+    try {
+      await collection.insertOne(generalData);
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   const last24hoursQuery = {
     lastUpdated: { $gt: sub(new Date(), { hours: 24 }) },
   };
+
   const options = {
     // sort returned documents in ascending order by title (A->Z)
     sort: { lastUpdated: 1 },
   };
+
   const last24hours = await collection
     .find<GeneralData & { _id: ObjectId; lastUpdated: Date }>(
       last24hoursQuery,
