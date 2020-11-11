@@ -67,7 +67,7 @@ const fetchGeneralData = async (): Promise<GeneralData> => {
   }
 
   const last24hoursQuery = {
-    lastUpdated: { $gt: sub(new Date(), { hours: 24 }) },
+    lastUpdated: { $gt: sub(new Date(), { hours: 24, minutes: 30 }) },
   };
 
   const options = {
