@@ -9,6 +9,7 @@ interface TimelineWidgetContext<T> {
   dataKey: keyof T & string;
   unit?: string;
   precision?: number;
+  dateFormat?: string;
 }
 const TimelineWidgetContext = React.createContext<TimelineWidgetContext<any>>({
   data: [],
@@ -41,33 +42,35 @@ type TimelineWidgetProps<Row extends DateRow> = {
   data: Row[];
   unit?: string;
   className?: string;
-  days: number;
+  interval: number;
   children: React.ReactNode;
   precision?: number;
+  dateFormat?: string;
 };
 
 export default function TimelineWidget<Row extends DateRow>({
   data,
   children,
-  days,
+  interval,
   dataKey,
   className,
   unit,
   precision,
+  dateFormat,
 }: TimelineWidgetProps<Row>) {
-  const subset = data.slice().reverse().slice(0, days).reverse();
+  const subset = data.slice().reverse().slice(0, interval).reverse();
 
   return (
     <TimelineWidgetContextProvider
-      value={{ data, subset, dataKey, unit, precision }}
+      value={{ data, subset, dataKey, unit, precision, dateFormat }}
     >
       <Widget className={className}>{children}</Widget>
     </TimelineWidgetContextProvider>
   );
 }
 
-TimelineWidget.BarChart = ({ color }) => {
-  const { dataKey, subset, unit, precision } = useContext(
+TimelineWidget.BarChart = ({ color, highlightDay = true }) => {
+  const { dataKey, subset, unit, precision, dateFormat } = useContext(
     TimelineWidgetContext
   );
   return (
@@ -78,12 +81,14 @@ TimelineWidget.BarChart = ({ color }) => {
       color={color}
       unit={unit}
       precision={precision}
+      dateFormat={dateFormat}
+      highlightDay={highlightDay}
     />
   );
 };
 
-TimelineWidget.LineChart = ({ color }) => {
-  const { dataKey, subset, unit, precision } = useContext(
+TimelineWidget.LineChart = ({ color, highlightDay = true }) => {
+  const { dataKey, subset, unit, precision, dateFormat } = useContext(
     TimelineWidgetContext
   );
   return (
@@ -94,6 +99,8 @@ TimelineWidget.LineChart = ({ color }) => {
       color={color}
       unit={unit}
       precision={precision}
+      dateFormat={dateFormat}
+      highlightDay={highlightDay}
     />
   );
 };

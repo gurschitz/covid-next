@@ -71,7 +71,6 @@ function GeneralDataWidgets({
   recovered,
   timeline,
 }: GeneralDataWidgetsProps) {
-  const formatDate = useDateFormatter();
   const lastEntry = timeline.slice().pop();
   const allCases = lastEntry?.casesSum ?? 0;
   const activeCases = allCases - recovered - deaths;
@@ -101,14 +100,8 @@ function GeneralDataWidgets({
           label={
             firstInfection && (
               <FormattedMessage
-                id="common.new_cases_timeframe"
-                defaultMessage="Neue Fälle seit {from}"
-                values={{
-                  from: formatDate(
-                    firstInfection.day,
-                    isToday(firstInfection.day) ? "HH:mm" : "dd.MM. HH:mm"
-                  ),
-                }}
+                id="common.last_24_hours"
+                defaultMessage="In den letzten 24 Stunden"
               />
             )
           }
@@ -159,6 +152,7 @@ function GeneralDataWidgets({
 type TimelineWidgetsProps = {
   timeline: TimelineRow[];
   versionData: VersionData;
+  generalData: GeneralData;
   healthMinistryData: HealthMinistryData;
   deaths: number;
   recovered: number;
@@ -170,6 +164,7 @@ function TimelineWidgets({
   deaths,
   recovered,
   healthMinistryData,
+  generalData,
 }: TimelineWidgetsProps) {
   const formatNumber = useNumberFormatter();
   const formatDate = useDateFormatter();
@@ -184,8 +179,47 @@ function TimelineWidgets({
     ? parseISO(healthMinistryData.hospitalized.timestamp)
     : new Date();
 
+  const newInfectionsTimeline = generalData.timeline.map(
+    ({ allCases, lastUpdated }, i) => {
+      const previousCases = generalData.timeline[i - 1]?.allCases;
+
+      return {
+        allCases,
+        diff: previousCases ? allCases - previousCases : 0,
+        day: lastUpdated,
+      };
+    }
+  );
+
+  const lastInfection = newInfectionsTimeline.slice().pop();
+
   return (
     <div className="py-3 px-3 lg:px-4">
+      <div className="pb-3">
+        <TimelineWidget
+          className="bg-gray-200 text-gray-900"
+          data={newInfectionsTimeline}
+          dataKey="diff"
+          interval={24}
+          dateFormat="HH:00"
+        >
+          <TimelineWidget.Value
+            label={
+              <FormattedMessage
+                id="common.last_hour"
+                defaultMessage="in der letzten Stunde"
+              />
+            }
+          >
+            {lastInfection?.diff ?? 0}
+          </TimelineWidget.Value>
+          <TimelineWidget.BarChart
+            highlightDay={false}
+            color={COLORS.blue.dark}
+          />
+        </TimelineWidget>
+      </div>
+
       <div className="flex justify-center lg:justify-end items-center space-x-4 w-full pt-4 pb-3">
         <WidgetIntervalButton interval={14} />
         <WidgetIntervalButton interval={30} />
@@ -197,7 +231,7 @@ function TimelineWidgets({
           className="bg-blue-100 text-blue-900"
           data={timeline}
           dataKey="sevenDay"
-          days={interval}
+          interval={interval}
         >
           <TimelineWidget.Value
             calculateDelta
@@ -240,7 +274,7 @@ function TimelineWidgets({
           }))}
           unit="%"
           dataKey="positivityRate"
-          days={interval}
+          interval={interval}
           precision={2}
         >
           <TimelineWidget.Value
@@ -259,7 +293,7 @@ function TimelineWidgets({
         <TimelineWidget
           className="bg-blue-100 text-blue-900"
           data={timeline}
-          days={interval}
+          interval={interval}
           dataKey="sevenDayAvgTests"
         >
           <TimelineWidget.Value
@@ -291,7 +325,7 @@ function TimelineWidgets({
             icuOccupancy: v.icuOccupancy * 100,
           }))}
           dataKey="icuOccupancy"
-          days={interval}
+          interval={interval}
           unit="%"
           precision={2}
         >
@@ -312,7 +346,7 @@ function TimelineWidgets({
           className="bg-red-100 text-red-900"
           data={timeline}
           dataKey="icu"
-          days={interval}
+          interval={interval}
         >
           <TimelineWidget.Value
             calculateDelta
@@ -343,7 +377,7 @@ function TimelineWidgets({
             hospitalOccupancy: v.hospitalOccupancy * 100,
           }))}
           dataKey="hospitalOccupancy"
-          days={interval}
+          interval={interval}
           unit="%"
           precision={2}
         >
@@ -364,7 +398,7 @@ function TimelineWidgets({
           className="bg-yellow-100 text-yellow-900"
           data={timeline}
           dataKey="hospitalized"
-          days={interval}
+          interval={interval}
         >
           <TimelineWidget.Value
             calculateDelta
@@ -395,7 +429,7 @@ function TimelineWidgets({
           className="bg-green-100 text-green-900"
           data={timeline}
           dataKey="recoveredPerDay"
-          days={interval}
+          interval={interval}
         >
           <TimelineWidget.Value
             showDelta
@@ -415,7 +449,7 @@ function TimelineWidgets({
           className="bg-gray-100 text-gray-900"
           data={timeline}
           dataKey="deathsPerDay"
-          days={interval}
+          interval={interval}
         >
           <TimelineWidget.Value
             showDelta
@@ -459,6 +493,7 @@ function Dashboard({
       <TimelineWidgets
         deaths={deaths}
         recovered={recovered}
+        generalData={generalData}
         timeline={timeline}
         versionData={versionData}
         healthMinistryData={healthMinistryData}

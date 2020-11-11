@@ -64,7 +64,8 @@ function getTooltipContent(
   dataKey: string,
   locale: string,
   unit?: string,
-  precision?: number
+  precision?: number,
+  dateFormat: string = DATE_FORMAT
 ) {
   return ({ payload, active, coordinate }) => {
     if (!active || payload == null || !payload[0] || coordinate?.x < 0)
@@ -77,7 +78,7 @@ function getTooltipContent(
         <div className="p-1 z-20 relative text-center">
           <p className="text-sm">
             {dayISO
-              ? parseAndFormatDate(dayISO, DATE_FORMAT, locale)
+              ? parseAndFormatDate(dayISO, dateFormat, locale)
               : "Ohne Datum"}
           </p>
 
@@ -104,6 +105,8 @@ type ChartProps<Row extends DateRow> = {
   unit?: string;
   className?: string;
   precision?: number;
+  dateFormat?: string;
+  highlightDay?: boolean;
 };
 
 Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
@@ -113,6 +116,8 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
   className,
   unit,
   precision,
+  dateFormat,
+  highlightDay = true,
 }: ChartProps<Row>) {
   const locale = useLocale();
   const [highlightedDay, onHighlightDay] = useAtom(highlightedDayAtom);
@@ -124,6 +129,7 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
           data={data}
           margin={CHART_MARGINS}
           onClick={(d) => {
+            if (!highlightDay) return;
             if (d) {
               const day = d.activePayload?.[0]?.payload?.day;
               if (day && onHighlightDay) {
@@ -141,7 +147,13 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
           }}
         >
           <Tooltip
-            content={getTooltipContent(dataKey, locale, unit, precision)}
+            content={getTooltipContent(
+              dataKey,
+              locale,
+              unit,
+              precision,
+              dateFormat
+            )}
           />
           <Bar
             dataKey={dataKey}
@@ -182,6 +194,8 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
   className,
   unit,
   precision,
+  dateFormat,
+  highlightDay = true,
 }: ChartProps<Row>) {
   const locale = useLocale();
   const [highlightedDay, onHighlightDay] = useAtom(highlightedDayAtom);
@@ -193,6 +207,7 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
         <LineChart
           margin={LINE_CHART_MARGINS}
           onClick={(d) => {
+            if (!highlightDay) return;
             if (d) {
               const day = d.activePayload?.[0]?.payload?.day;
               if (day && onHighlightDay) {
@@ -212,7 +227,13 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
         >
           <YAxis hide />
           <Tooltip
-            content={getTooltipContent(dataKey, locale, unit, precision)}
+            content={getTooltipContent(
+              dataKey,
+              locale,
+              unit,
+              precision,
+              dateFormat
+            )}
           />
           <Line
             dataKey={dataKey}

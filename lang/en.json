@@ -22,6 +22,8 @@
   "common.seven_day_average": "7-day-average",
   "common.seven_day_average_tests": "7-day-average tests",
   "common.seven_day_average_cases": "7-day-average cases",
+  "common.last_24_hours": "in the last 24 hours",
+  "common.last_hour": "in the last hour",
   "common.positivity_rate": "positivity rate",
   "common.per_x_inhabitants": "per {x} inhabitants",
   "common.x_days": "{x} days",
