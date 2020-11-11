@@ -19,9 +19,8 @@ import { useDateFormatter, useNumberFormatter } from "../helpers/formatters";
 import IntlProvider from "../components/IntlProvider";
 import Head from "../components/Head";
 import { HealthMinistryData } from "../helpers/fetchHealthMinistryData";
-import { isSameDay, isToday, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { widgetIntervalAtom } from "../atoms/interval";
-import { formatDateToParts } from "@formatjs/intl";
 
 type DataProps = {
   timeline: TimelineRow[];
@@ -87,28 +86,8 @@ function GeneralDataWidgets({
     }
   );
 
-  const newInfections = newInfectionsTimeline.reduce((acc, v) => {
-    return acc + v.diff;
-  }, 0);
-
-  const firstInfection = newInfectionsTimeline[0];
-
   return (
-    <div className="grid lg:grid-cols-4 gap-3 px-3 lg:px-4">
-      <Widget className="bg-gray-200 text-gray-900">
-        <Widget.Value
-          label={
-            firstInfection && (
-              <FormattedMessage
-                id="common.last_24_hours"
-                defaultMessage="In den letzten 24 Stunden"
-              />
-            )
-          }
-        >
-          <Number>{newInfections}</Number>
-        </Widget.Value>
-      </Widget>
+    <div className="grid lg:grid-cols-3 gap-3 px-3 lg:px-4">
       <Widget className="bg-gray-200 text-gray-900">
         <Widget.Value
           label={
@@ -193,11 +172,31 @@ function TimelineWidgets({
 
   const lastInfection = newInfectionsTimeline.slice().pop();
 
+  const newInfections = newInfectionsTimeline.reduce((acc, v) => {
+    return acc + v.diff;
+  }, 0);
+
+  const firstInfection = newInfectionsTimeline[0];
+
   return (
     <div className="py-3 px-3 lg:px-4">
-      <div className="pb-3">
+      <div className="grid lg:grid-cols-3 gap-3 pb-3">
+        <Widget className="bg-gray-200 text-gray-900">
+          <Widget.Value
+            label={
+              firstInfection && (
+                <FormattedMessage
+                  id="common.last_24_hours"
+                  defaultMessage="In den letzten 24 Stunden"
+                />
+              )
+            }
+          >
+            <Number>{newInfections}</Number>
+          </Widget.Value>
+        </Widget>
         <TimelineWidget
-          className="bg-gray-200 text-gray-900"
+          className="bg-gray-200 text-gray-900 lg:col-span-2"
           data={newInfectionsTimeline}
           dataKey="diff"
           interval={24}
