@@ -43,6 +43,17 @@ export async function getStaticProps({ locale }): Promise<{ props: Props }> {
   const healthMinistryData = await dataApi.fetchHealthMinistryData();
   const generalData = await dataApi.fetchGeneralData();
 
+  console.log("====");
+  console.log("====");
+  console.log("====");
+  console.log("====");
+  console.log({ generalData });
+  console.log({ timeline });
+  console.log("====");
+  console.log("====");
+  console.log("====");
+  console.log("====");
+
   return {
     props: {
       timeline,
