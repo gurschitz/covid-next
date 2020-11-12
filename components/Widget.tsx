@@ -166,7 +166,9 @@ Widget.BarChart = function WidgetBarChart<Row extends DateRow>({
             {data.map((entry, index) => {
               const entryDay = parseISO(entry.day);
               const shouldHighlightDay =
-                highlightedDay && getDay(highlightedDay) === getDay(entryDay);
+                highlightDay &&
+                highlightedDay &&
+                getDay(highlightedDay) === getDay(entryDay);
               return (
                 <Cell
                   key={index}
@@ -247,7 +249,9 @@ Widget.LineChart = function WidgetLineChart<Row extends DateRow>({
             }: DotProps & { payload: any; dataKey: string }) => {
               const entryDay = parseISO(payload?.day);
               const shouldHighlightDay =
-                highlightedDay && getDay(highlightedDay) === getDay(entryDay);
+                highlightDay &&
+                highlightedDay &&
+                getDay(highlightedDay) === getDay(entryDay);
               let radius = intervalRadius[interval]?.default;
 
               if (shouldHighlightDay) {
