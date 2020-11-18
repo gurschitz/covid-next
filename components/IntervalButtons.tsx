@@ -15,7 +15,11 @@ type IntervalButtonProps = {
   children: React.ReactChild;
 };
 
-function IntervalButton({ selected, onClick, children }: IntervalButtonProps) {
+export function IntervalButton({
+  selected,
+  onClick,
+  children,
+}: IntervalButtonProps) {
   return (
     <button
       className={classNames(

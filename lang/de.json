@@ -23,6 +23,8 @@
   "common.seven_day_average_tests": "7-Tage-Mittel Testungen",
   "common.seven_day_average_cases": "7-Tage-Mittel Fälle",
   "common.last_24_hours": "in den letzten 24 Stunden",
+  "common.since_8": "seit 08:00",
+  "common.since_midnight": "seit 00:00",
   "common.last_hour": "in der letzten Stunde",
   "common.positivity_rate": "Positivitätsrate",
   "common.per_x_inhabitants": "per {x} Einwohner",

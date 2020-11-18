@@ -66,8 +66,8 @@ const fetchGeneralData = async (): Promise<GeneralData> => {
     }
   }
 
-  const last24hoursQuery = {
-    lastUpdated: { $gt: sub(new Date(), { hours: 24, minutes: 30 }) },
+  const timelineQuery = {
+    lastUpdated: { $gt: sub(new Date(), { hours: 48, minutes: 30 }) },
   };
 
   const options = {
@@ -75,9 +75,9 @@ const fetchGeneralData = async (): Promise<GeneralData> => {
     sort: { lastUpdated: 1 },
   };
 
-  const last24hours = await collection
+  const timeline = await collection
     .find<GeneralData & { _id: ObjectId; lastUpdated: Date }>(
-      last24hoursQuery,
+      timelineQuery,
       options
     )
     .toArray();
@@ -87,7 +87,7 @@ const fetchGeneralData = async (): Promise<GeneralData> => {
     lastUpdated: formatISO(generalData.lastUpdated),
     timeline: R.uniqBy(
       R.prop("lastUpdated"),
-      last24hours.map(({ _id, lastUpdated, ...rest }) => ({
+      timeline.map(({ _id, lastUpdated, ...rest }) => ({
         lastUpdated: formatISO(lastUpdated),
         ...rest,
       }))

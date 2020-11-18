@@ -23,6 +23,8 @@
   "common.seven_day_average_tests": "7-day-average tests",
   "common.seven_day_average_cases": "7-day-average cases",
   "common.last_24_hours": "in the last 24 hours",
+  "common.since_8": "since 08:00",
+  "common.since_midnight": "since 00:00",
   "common.last_hour": "in the last hour",
   "common.positivity_rate": "positivity rate",
   "common.per_x_inhabitants": "per {x} inhabitants",

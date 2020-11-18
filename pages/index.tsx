@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import dataApi, {
   GeneralData,
   TimelineRow,
@@ -12,14 +12,17 @@ import Widget from "../components/Widget";
 import TimelineWidget from "../components/TimelineWidget";
 import NewCases from "../components/NewCases";
 import { useAtom } from "jotai";
-import { WidgetIntervalButton } from "../components/IntervalButtons";
+import {
+  IntervalButton,
+  WidgetIntervalButton,
+} from "../components/IntervalButtons";
 import { FormattedMessage } from "react-intl";
 import getMessages from "../helpers/getMessages";
 import { useDateFormatter, useNumberFormatter } from "../helpers/formatters";
 import IntlProvider from "../components/IntlProvider";
 import Head from "../components/Head";
 import { HealthMinistryData } from "../helpers/fetchHealthMinistryData";
-import { parseISO } from "date-fns";
+import { addHours, isToday, parseISO, startOfDay, isAfter } from "date-fns";
 import { widgetIntervalAtom } from "../atoms/interval";
 
 type DataProps = {
@@ -42,17 +45,6 @@ export async function getStaticProps({ locale }): Promise<{ props: Props }> {
   const messages = await getMessages(locale);
   const healthMinistryData = await dataApi.fetchHealthMinistryData();
   const generalData = await dataApi.fetchGeneralData();
-
-  console.log("====");
-  console.log("====");
-  console.log("====");
-  console.log("====");
-  console.log({ generalData });
-  console.log({ timeline });
-  console.log("====");
-  console.log("====");
-  console.log("====");
-  console.log("====");
 
   return {
     props: {
@@ -84,18 +76,6 @@ function GeneralDataWidgets({
   const lastEntry = timeline.slice().pop();
   const allCases = lastEntry?.casesSum ?? 0;
   const activeCases = allCases - recovered - deaths;
-
-  const newInfectionsTimeline = generalData.timeline.map(
-    ({ allCases, lastUpdated }, i) => {
-      const previousCases = generalData.timeline[i - 1]?.allCases;
-
-      return {
-        allCases,
-        diff: previousCases ? allCases - previousCases : 0,
-        day: parseISO(lastUpdated),
-      };
-    }
-  );
 
   return (
     <div className="grid lg:grid-cols-3 gap-3 px-3 lg:px-4">
@@ -148,6 +128,14 @@ type TimelineWidgetsProps = {
   recovered: number;
 };
 
+function filterSinceNHoursAfterMidnight(n: number, currentDay: Date) {
+  return ({ day }) => {
+    const date = parseISO(day);
+
+    return isAfter(date, addHours(startOfDay(currentDay), n));
+  };
+}
+
 function TimelineWidgets({
   timeline,
   versionData,
@@ -156,6 +144,9 @@ function TimelineWidgets({
   healthMinistryData,
   generalData,
 }: TimelineWidgetsProps) {
+  const [newInfectionsInterval, setNewInfectionsInterval] = useState<
+    "24h" | "since8" | "sinceMidnight"
+  >("sinceMidnight");
   const formatNumber = useNumberFormatter();
   const formatDate = useDateFormatter();
   const [interval] = useAtom(widgetIntervalAtom);
@@ -169,7 +160,7 @@ function TimelineWidgets({
     ? parseISO(healthMinistryData.hospitalized.timestamp)
     : new Date();
 
-  const newInfectionsTimeline = generalData.timeline.map(
+  let newInfectionsTimeline = generalData.timeline.map(
     ({ allCases, lastUpdated }, i) => {
       const previousCases = generalData.timeline[i - 1]?.allCases;
 
@@ -182,27 +173,69 @@ function TimelineWidgets({
   );
 
   const lastInfection = newInfectionsTimeline.slice().pop();
+  const currentDay = lastInfection?.day
+    ? parseISO(lastInfection?.day)
+    : new Date();
+
+  let label: React.ReactNode = null;
+  if (newInfectionsInterval === "since8") {
+    newInfectionsTimeline = newInfectionsTimeline.filter(
+      filterSinceNHoursAfterMidnight(8, currentDay)
+    );
+    label = (
+      <FormattedMessage id="common.since_8" defaultMessage="Seit 08:00" />
+    );
+  } else if (newInfectionsInterval === "sinceMidnight") {
+    newInfectionsTimeline = newInfectionsTimeline.filter(
+      filterSinceNHoursAfterMidnight(0, currentDay)
+    );
+    label = (
+      <FormattedMessage
+        id="common.since_midnight"
+        defaultMessage="Seit Mitternacht"
+      />
+    );
+  } else {
+    newInfectionsTimeline = newInfectionsTimeline.slice(-23);
+    label = (
+      <FormattedMessage
+        id="common.last_24_hours"
+        defaultMessage="In den letzten 24 Stunden"
+      />
+    );
+  }
 
   const newInfections = newInfectionsTimeline.reduce((acc, v) => {
     return acc + v.diff;
   }, 0);
 
-  const firstInfection = newInfectionsTimeline[0];
-
   return (
     <div className="py-3 px-3 lg:px-4">
+      <div className="flex justify-center lg:justify-end items-center space-x-4 w-full pt-4 pb-3">
+        <IntervalButton
+          onClick={() => setNewInfectionsInterval("sinceMidnight")}
+          selected={newInfectionsInterval === "sinceMidnight"}
+        >
+          0:00
+        </IntervalButton>
+
+        <IntervalButton
+          onClick={() => setNewInfectionsInterval("since8")}
+          selected={newInfectionsInterval === "since8"}
+        >
+          8:00
+        </IntervalButton>
+
+        <IntervalButton
+          onClick={() => setNewInfectionsInterval("24h")}
+          selected={newInfectionsInterval === "24h"}
+        >
+          24h
+        </IntervalButton>
+      </div>
       <div className="grid lg:grid-cols-3 gap-3 pb-3">
         <Widget className="bg-gray-200 text-gray-900">
-          <Widget.Value
-            label={
-              firstInfection && (
-                <FormattedMessage
-                  id="common.last_24_hours"
-                  defaultMessage="In den letzten 24 Stunden"
-                />
-              )
-            }
-          >
+          <Widget.Value label={label}>
             <Number>{newInfections}</Number>
           </Widget.Value>
         </Widget>
