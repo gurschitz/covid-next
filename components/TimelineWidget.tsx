@@ -119,14 +119,14 @@ TimelineWidget.Value = ({
   const { unit, subset, dataKey, precision } = useContext(
     TimelineWidgetContext
   );
-  const lastValueIsToday = isToday(parseISO(subset[subset.length - 1].day));
+  const lastValueIsToday = isToday(parseISO(subset[subset.length - 1]?.day));
   const prevValue = lastValueIsToday
-    ? subset[subset.length - 2][dataKey]
-    : subset[subset.length - 1][dataKey];
+    ? subset[subset.length - 2]?.[dataKey]
+    : subset[subset.length - 1]?.[dataKey];
   const diffBasis = lastValueIsToday
-    ? subset[subset.length - 1][dataKey]
+    ? subset[subset.length - 1]?.[dataKey]
     : children;
-  const currentValue = subset[subset.length - 1][dataKey];
+  const currentValue = subset[subset.length - 1]?.[dataKey];
   const delta = calculateDelta ? diffBasis - prevValue : currentValue;
 
   return (
