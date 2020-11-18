@@ -196,7 +196,7 @@ function TimelineWidgets({
       />
     );
   } else {
-    newInfectionsTimeline = newInfectionsTimeline.slice(-23);
+    newInfectionsTimeline = newInfectionsTimeline.slice(-24);
     label = (
       <FormattedMessage
         id="common.last_24_hours"
