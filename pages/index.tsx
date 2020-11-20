@@ -22,7 +22,7 @@ import { useDateFormatter, useNumberFormatter } from "../helpers/formatters";
 import IntlProvider from "../components/IntlProvider";
 import Head from "../components/Head";
 import { HealthMinistryData } from "../helpers/fetchHealthMinistryData";
-import { addHours, isToday, parseISO, startOfDay, isAfter } from "date-fns";
+import { addHours, subDays, parseISO, startOfDay, isAfter } from "date-fns";
 import { widgetIntervalAtom } from "../atoms/interval";
 
 type DataProps = {
@@ -196,7 +196,11 @@ function TimelineWidgets({
       />
     );
   } else {
-    newInfectionsTimeline = newInfectionsTimeline.slice(-23);
+    newInfectionsTimeline = newInfectionsTimeline.filter(({ day }) => {
+      const date = parseISO(day);
+
+      return isAfter(date, subDays(currentDay, 1));
+    });
     label = (
       <FormattedMessage
         id="common.last_24_hours"
