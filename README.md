@@ -1,5 +1,5 @@
 ## Dashboard for SarS-CoV-2 infections in Austria
-Visit [covid-at.vercel.app](http://covid-at.vercel.app) to see the live version.
+~Visit [covid-at.vercel.app](http://covid-at.vercel.app) to see the live version.~ Link not working anymore.
 
 ## Run it
 
